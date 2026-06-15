@@ -1,7 +1,16 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import url('https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   本草医案 (Bencao Clinic) Design Token
+   风格：S3 温暖亲和 + 中医微调
+   主色：emerald-600 翠绿（中医药材色）
+   背景：#FAF9F6 米白（古书/羊皮纸色调）
+   字体：Noto Sans SC + system-ui
+   ============================================================ */
 
 @theme inline {
   --color-background: var(--background);
@@ -35,6 +44,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -43,84 +60,78 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
   --font-sans:
-    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', ui-sans-serif,
-    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+    'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
   --font-serif:
     'Noto Serif SC', 'Songti SC', 'SimSun', ui-serif, Georgia, Cambria,
     'Times New Roman', Times, serif;
+  --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04), 0 4px 12px rgba(28, 25, 23, 0.05);
+  --shadow-float: 0 4px 8px rgba(28, 25, 23, 0.06), 0 12px 28px rgba(28, 25, 23, 0.08);
+  --shadow-dialog: 0 10px 20px rgba(28, 25, 23, 0.10), 0 30px 60px rgba(28, 25, 23, 0.12);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  /* === 基础几何 === */
+  --radius: 0.75rem; /* 12px */
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* === 核心色：米白底（古书羊皮纸） === */
+  --background: oklch(0.985 0.005 80);     /* #FAF9F6 米白 */
+  --foreground: oklch(0.21 0.006 285);     /* #1C1917 近黑文字 */
+
+  /* === 卡片/表面 === */
+  --card: oklch(1 0 0);                    /* #FFFFFF 纯白卡片，靠阴影浮起 */
+  --card-foreground: oklch(0.21 0.006 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.006 285);
+
+  /* === 主色：翠绿（中医药材色） === */
+  --primary: oklch(0.596 0.145 163);       /* #059669 emerald-600 */
+  --primary-foreground: oklch(1 0 0);      /* #FFFFFF 主色上的文字 */
+
+  /* === 次要/容器/输入框背景 === */
+  --secondary: oklch(0.95 0.008 80);       /* #F1EFEC 米灰 */
+  --secondary-foreground: oklch(0.21 0.006 285);
+  --muted: oklch(0.95 0.008 80);
+  --muted-foreground: oklch(0.552 0.016 286); /* #71717A 次要文字 */
+  --accent: oklch(0.95 0.008 80);
+  --accent-foreground: oklch(0.21 0.006 285);
+
+  /* === 状态色 === */
+  --destructive: oklch(0.637 0.237 25);    /* #EF4444 医疗禁忌红 */
+  --error: oklch(0.637 0.237 25);
+  --error-foreground: oklch(1 0 0);
+  --success: oklch(0.723 0.219 150);       /* #22C55E 在线/已认证 */
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.769 0.188 70);        /* #F59E0B 待复诊橙 */
+  --warning-foreground: oklch(0.21 0.006 285);
+  --info: oklch(0.623 0.214 260);          /* #3B82F6 */
+  --info-foreground: oklch(1 0 0);
+
+  /* === 边框/输入框/聚焦环 === */
+  --border: oklch(0.92 0.004 286);         /* #E4E4E7 边框 */
+  --input: oklch(0.92 0.004 286);
+  --ring: oklch(0.596 0.145 163);          /* 主色聚焦环 */
+
+  /* === 图表色板（5 色：emerald + 4 暖色） === */
+  --chart-1: oklch(0.596 0.145 163);       /* 主色 */
+  --chart-2: oklch(0.769 0.188 70);        /* 橙 */
+  --chart-3: oklch(0.623 0.214 260);       /* 蓝 */
+  --chart-4: oklch(0.723 0.219 150);       /* 绿 */
+  --chart-5: oklch(0.637 0.237 25);        /* 红 */
+
+  /* === 侧边栏（保留） === */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.21 0.006 285);
+  --sidebar-primary: oklch(0.596 0.145 163);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.008 80);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285);
+  --sidebar-border: oklch(0.92 0.004 286);
+  --sidebar-ring: oklch(0.596 0.145 163);
 }
 
 @layer base {
@@ -128,10 +139,63 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  /* 滚动条优化 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.85 0.005 80);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.75 0.005 80);
   }
 }
 
-body {
-  @apply font-sans;
+/* ============================================================
+   本草医案通用样式
+   ============================================================ */
+@layer components {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-float {
+    box-shadow: var(--shadow-float);
+  }
+  .shadow-dialog {
+    box-shadow: var(--shadow-dialog);
+  }
+
+  /* 中医 chip 样式（未选/已选） */
+  .tcm-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-all select-none;
+    @apply bg-muted text-muted-foreground hover:bg-muted/80;
+  }
+  .tcm-chip[data-selected="true"],
+  .tcm-chip.is-active {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm;
+  }
+
+  /* 医疗禁忌红 banner */
+  .tcm-allergy-banner {
+    @apply bg-destructive/10 border-l-4 border-destructive text-destructive px-4 py-3 rounded-r-md flex items-start gap-2;
+  }
+
+  /* 时间轴连线 */
+  .tcm-timeline-line {
+    @apply absolute left-[19px] top-0 bottom-0 w-0.5 bg-border;
+  }
+  .tcm-timeline-dot {
+    @apply absolute left-3 w-4 h-4 rounded-full bg-background border-4 border-border z-10;
+  }
+  .tcm-timeline-dot.is-current {
+    @apply border-primary bg-primary;
+  }
 }

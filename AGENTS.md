@@ -1,65 +1,153 @@
-# 项目上下文
+# AGENTS.md
 
-### 版本技术栈
+## 项目概览
+
+**本草医案** — 面向个人中医诊所和中医爱好者的诊疗档案管理系统。
+
+- **业务定位**：记录脉象、舌象、面相等中医特色诊断信息，支持结构化中药处方、针灸推拿等外治方案，AI 智能辨证参考
+- **目标用户**：个人诊所医师、中医爱好者、医师助理
+- **核心场景**：日常接诊、复诊跟进、AI 辨证参考
+- **关联品牌**：本草医案 / Bencao Clinic
+
+## 技术栈
 
 - **Framework**: Next.js 16 (App Router)
 - **Core**: React 19
-- **Language**: TypeScript 5
-- **UI 组件**: shadcn/ui (基于 Radix UI)
-- **Styling**: Tailwind CSS 4
+- **Language**: TypeScript 5 (strict)
+- **UI 组件**: Tailwind CSS 4 + shadcn/ui 风格（已迁移到 `globals.css` 的 `@theme`）
+- **数据库**: Supabase (PostgreSQL) + Drizzle ORM
+- **LLM 集成**: coze-coding-dev-sdk 的 `LLMClient.stream()`，模型 `deepseek-v3-2-251201`
+- **设计风格**: 翠绿主色（`#059669`）+ 米白底（`#FAF9F6`）+ Noto Sans SC
 
-## 目录结构
+## 项目结构
 
 ```
+.
 ├── public/                 # 静态资源
 ├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
+│   ├── build.sh
+│   ├── dev.sh
+│   ├── prepare.sh
+│   └── start.sh
 ├── src/
-│   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
-│   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
-├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+│   ├── app/
+│   │   ├── globals.css             # Design Token（emerald + 米白 + 圆角 12px）
+│   │   ├── layout.tsx              # Root layout（中文 lang + 本草医案品牌）
+│   │   ├── page.tsx                # 仪表盘（统计 + 最近患者 + 待办 + AI Banner）
+│   │   ├── patients/
+│   │   │   ├── page.tsx            # 患者列表（搜索 + 卡片）
+│   │   │   ├── [id]/page.tsx       # 患者详情（基本信息 + 时间轴 + 处方）
+│   │   │   └── [id]/records/new/page.tsx  # 病历编辑（11 个 section + AI 入口）
+│   │   ├── account/page.tsx        # 账号设置（个人/诊所/通知/安全）
+│   │   └── api/ai/diagnosis/route.ts  # DeepSeek 流式 API（SSE）
+│   ├── components/
+│   │   ├── app-header.tsx          # 共享顶部导航
+│   │   └── ui/                     # shadcn/ui 组件
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── utils.ts                # cn 工具
+│   │   └── supabase.ts             # Supabase 客户端
+│   └── server.ts                   # 自定义服务端入口
+├── next.config.ts
+├── package.json
+└── tsconfig.json
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 核心命令
 
-## 包管理规范
+```bash
+# 开发
+pnpm dev
 
-**仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
+# 构建
+pnpm build
 
-## 开发规范
+# 类型检查
+pnpm ts-check
 
-### 编码规范
+# Lint
+pnpm lint
+```
 
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
+## 数据库 Schema（Supabase）
 
-### next.config 配置规范
+7 张表，通过 `coze-coding-ai db generate-models` 同步到 `src/storage/database/shared/schema.ts`：
 
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
+1. `clinics` - 诊所
+2. `clinic_members` - 成员（关联 auth.users）
+3. `patients` - 患者
+4. `medical_records` - 病历
+5. `prescription_items` - 处方药材
+6. `treatment_items` - 治疗（针灸+外治）
+7. `tcm_options` - TCM 选项库（已预置 525+ 条：中药 258 / 穴位 88 / 体质 9 / 证型 30+ / 问诊 67）
 
-### Hydration 问题防范
+## AI 辨证 API
 
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
+**端点**: `POST /api/ai/diagnosis`
+**模型**: `deepseek-v3-2-251201`（平台托管，无需用户提供 API Key）
+**协议**: SSE 流式输出
+**强制末尾提示**: 双层保证 — prompt 模板中显式声明 + 后端代码末尾再次拼接
 
-## UI 设计与组件规范 (UI & Styling Standards)
+**前端调用**: `record-edit` 页面底部"AI 智能辨证"section，使用 `fetch().body.getReader()` 增量渲染。
 
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+## 页面清单
+
+| 路径 | 组件 | 功能 |
+|---|---|---|
+| `/` | `app/page.tsx` | 仪表盘：4 个统计卡片 + 最近患者 + 待办提醒 + AI Banner |
+| `/patients` | `app/patients/page.tsx` | 患者列表：搜索 + 体质色卡 + 过敏标签 + 快捷录病历 |
+| `/patients/[id]` | `app/patients/[id]/page.tsx` | 患者详情：基本信息 + 病历时间轴（初诊/复诊区分） |
+| `/patients/[id]/records/new` | `app/patients/[id]/records/new/page.tsx` | 病历编辑：11 个 section + AI 流式辨证 |
+| `/account` | `app/account/page.tsx` | 账号设置：4 个卡片（个人/诊所/通知/安全） |
+
+## 编码规范
+
+- TypeScript `strict` 模式开启，禁止 `any`
+- 所有 React 组件使用 'use client' 仅在需要交互时（病历编辑页、AI 入口）
+- 服务端组件优先，能用 RSC 的不要用 Client Component
+- Hydration 安全：动态数据（Date.now / Math.random）必须在 useEffect 内访问
+
+## 常见任务
+
+### 添加新页面
+
+1. 在 `src/app/` 下创建文件夹
+2. 创建 `page.tsx`（如需交互则加 `'use client'`）
+3. 引入 `<AppHeader />` 共享导航
+4. 复用 Design Token（`bg-surface` / `text-foreground` / `border-outline-variant/30` 等）
+
+### 添加新 API 路由
+
+1. 在 `src/app/api/[name]/route.ts` 创建
+2. 导出 `POST` / `GET` 等方法
+3. 鉴权：从 `headers['x-session']` 取 token，调 Supabase 校验
+4. 流式响应：构造 `ReadableStream` + `Content-Type: text/event-stream`
+
+### 接入新的 TCM 选项
+
+1. 在 Supabase 的 `tcm_options` 表 `INSERT`（参考 `tmp/seed_full.sql`）
+2. 前端用 `SELECT * FROM tcm_options WHERE category = 'xxx'` 动态拉取
+3. 当前页面用静态数组作为 mock，后续可替换为 API
+
+## 安全与隐私
+
+- **AI API Key 不在前端暴露**：DeepSeek 调用走 Next.js API Route，使用平台托管
+- **多租户隔离**：所有表带 `clinic_id`，RLS 策略强制按 clinic 过滤
+- **医疗免责声明**：AI 输出末尾必须包含 `【提示】本内容由 AI 生成，仅作为文书整理参考，具体诊断和治疗请遵从执业医师的指导。`（双层保证）
+- **过敏禁忌**：病历详情页和编辑页均高亮显示
+
+## 部署
+
+- 平台：扣子编程 Vibe Coding（云端沙箱）
+- 预览端口：5000（主仓）
+- 部署命令：`coze dev` 启动预览，`coze build` 构建生产版本
+- 域名：沙箱自动分配 `https://*.coze.site`
+
+## 后续优化
+
+- [ ] 真实数据库查询替代 mock 数据
+- [ ] Supabase Auth 多账号登录（admin/医师/助理/前台）
+- [ ] 病历照片上传（舌象/面相）到对象存储
+- [ ] 病历打印/导出 PDF
+- [ ] 复诊提醒定时任务
+- [ ] 微信小程序接入（共用 Next.js API Routes）
