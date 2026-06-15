@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>本草医案 · 中医诊所档案管理系统</title>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（中医绿，emerald 系） === */
+      --color-primary:               #059669;
+      --color-primary-container:     #D1FAE5;
+      --color-on-primary:            #ffffff;
+      /* === 背景 / 表面（古书米白色调） === */
+      --color-background:                 #FAF9F6;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F1EFEC;
+      --color-surface-container-high:     #E8E5E0;
+      --color-surface-container-highest:  #DDD9D2;
+      /* === 文字 === */
+      --color-on-surface:           #1C1917;
+      --color-on-surface-variant:   #78716C;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #D6D3D1;
+      --color-outline-variant:  #E7E5E4;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(28,25,23,0.06);
+      --shadow-float:  0 10px 25px rgba(28,25,23,0.10);
+      --shadow-dialog: 0 25px 50px rgba(28,25,23,0.15);
+      /* === 字体 === */
+      --font-sans: "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+  </style>
+
+  <style>
+    body { font-family: var(--font-sans); }
+    /* 滚动条美化 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-on-surface-variant); }
+  </style>
+
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface">
+
+  <!-- @nav:start 顶部导航（一级页使用，二级页请替换为简化版 header：返回按钮 + 页面标题） -->
+  <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/30">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <!-- Logo -->
+      <a href="home.html" class="flex items-center gap-2.5 shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-card">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="text-base font-bold text-on-surface">本草医案</div>
+          <div class="text-[10px] text-on-surface-variant tracking-wider font-medium">TCM · CLINIC</div>
+        </div>
+      </a>
+
+      <!-- 顶部导航 -->
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3.5 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-md flex items-center gap-1.5" aria-current="page">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>仪表盘
+        </a>
+        <a href="patient-list.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="users" class="w-4 h-4"></i>患者
+        </a>
+        <a href="account.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="user-cog" class="w-4 h-4"></i>账号设置
+        </a>
+      </nav>
+
+      <!-- 用户菜单 -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="relative w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span>
+        </button>
+        <div class="flex items-center gap-2.5 pl-3 border-l border-outline-variant/30">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-semibold">初</div>
+          <div class="text-sm font-medium text-on-surface">小初</div>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!--
+    布局说明：顶部导航布局，主内容区使用 max-w-7xl mx-auto
+    二级页（patient-detail.html / record-edit.html）请使用简化版 header（仅返回按钮 + 页面标题）替代顶部导航
+  -->
+  <!-- @main-content:start -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- 页面业务内容由子 Agent 填充 -->
+  </main>
+  <!-- @main-content:end -->
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

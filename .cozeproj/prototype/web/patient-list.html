@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>患者档案 · 本草医案</title>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（中医绿，emerald 系） === */
+      --color-primary:               #059669;
+      --color-primary-container:     #D1FAE5;
+      --color-on-primary:            #ffffff;
+      /* === 背景 / 表面（古书米白色调） === */
+      --color-background:                 #FAF9F6;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F1EFEC;
+      --color-surface-container-high:     #E8E5E0;
+      --color-surface-container-highest:  #DDD9D2;
+      /* === 文字 === */
+      --color-on-surface:           #1C1917;
+      --color-on-surface-variant:   #78716C;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #D6D3D1;
+      --color-outline-variant:  #E7E5E4;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(28,25,23,0.06);
+      --shadow-float:  0 10px 25px rgba(28,25,23,0.10);
+      --shadow-dialog: 0 25px 50px rgba(28,25,23,0.15);
+      /* === 字体 === */
+      --font-sans: "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+  </style>
+
+  <style>
+    body { font-family: var(--font-sans); }
+    /* 滚动条美化 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-on-surface-variant); }
+  </style>
+
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface">
+
+  <!-- @nav:start 顶部导航（一级页使用，二级页请替换为简化版 header：返回按钮 + 页面标题） -->
+  <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/30">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <!-- Logo -->
+      <a href="home.html" class="flex items-center gap-2.5 shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-card">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="text-base font-bold text-on-surface">本草医案</div>
+          <div class="text-[10px] text-on-surface-variant tracking-wider font-medium">TCM · CLINIC</div>
+        </div>
+      </a>
+
+      <!-- 顶部导航 -->
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>仪表盘
+        </a>
+        <a href="patient-list.html" class="px-3.5 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-md flex items-center gap-1.5" aria-current="page">
+          <i data-lucide="users" class="w-4 h-4"></i>患者
+        </a>
+        <a href="account.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="user-cog" class="w-4 h-4"></i>账号设置
+        </a>
+      </nav>
+
+      <!-- 用户菜单 -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="relative w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span>
+        </button>
+        <div class="flex items-center gap-2.5 pl-3 border-l border-outline-variant/30">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-semibold">初</div>
+          <div class="text-sm font-medium text-on-surface">小初</div>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!--
+    布局说明：顶部导航布局，主内容区使用 max-w-7xl mx-auto
+    二级页（patient-detail.html / record-edit.html）请使用简化版 header（仅返回按钮 + 页面标题）替代顶部导航
+  -->
+  <!-- @main-content:start -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- 页面标题区 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-on-surface">患者档案</h1>
+        <p class="text-sm text-on-surface-variant mt-1">管理所有就诊患者</p>
+      </div>
+      <button id="btn-add-patient" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2 shadow-card">
+        <i data-lucide="plus" class="w-4 h-4"></i>新增患者
+      </button>
+    </div>
+
+    <!-- 搜索 + 筛选条 -->
+    <div class="flex items-center gap-3 mb-2">
+      <!-- 搜索框 -->
+      <div class="relative flex-1">
+        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none"></i>
+        <input id="search-patient" type="text" placeholder="按姓名/电话搜索..."
+               class="w-full bg-surface-container border-none rounded-full pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+      </div>
+      <!-- 筛选 chips -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="chip-all" class="px-4 py-2 rounded-full text-sm font-medium bg-primary text-on-primary inline-flex items-center gap-1.5 transition-colors">
+          全部<span class="bg-on-primary/20 text-on-primary px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none">128</span>
+        </button>
+        <button id="chip-allergy" class="px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high inline-flex items-center gap-1.5 transition-colors">
+          有禁忌<span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none">15</span>
+        </button>
+        <button id="chip-followup" class="px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high inline-flex items-center gap-1.5 transition-colors">
+          待复诊<span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none">23</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 数据统计 -->
+    <p class="text-xs text-on-surface-variant mb-5">共 128 位患者，本月新增 12 位</p>
+
+    <!-- 患者列表 -->
+    <div id="patient-list" class="space-y-3">
+
+      <!-- 列表-患者1 王秀英 -->
+      <div id="patient-card-1" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <!-- 列1：头像 + 姓名/年龄/性别 -->
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-base font-semibold shrink-0">王</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">王秀英</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">65岁 · 女</div>
+              </div>
+            </div>
+            <!-- 列2：电话 -->
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">138****8001</span>
+            </div>
+            <!-- 列3：体质标签 -->
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">痰湿质</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">气虚质</span>
+            </div>
+            <!-- 列4：主诉/病情摘要 -->
+            <div class="text-sm text-on-surface truncate" title="咳嗽反复两周，痰白稀">咳嗽反复两周，痰白稀</div>
+            <!-- 列5：最后就诊时间 + 次数 -->
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-10-10</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第3次就诊</div>
+            </div>
+            <!-- 右侧操作 -->
+            <a href="patient-detail.html?id=1" id="btn-view-1" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 列表-患者2 李建国（含禁忌 banner） -->
+      <div id="patient-card-2" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <!-- 禁忌 banner -->
+        <div class="bg-error/10 border-l-4 border-error text-error px-4 py-2.5 text-sm flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+          <span class="font-medium">医疗禁忌：青霉素过敏 / 磺胺类过敏</span>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-base font-semibold shrink-0">李</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">李建国</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">52岁 · 男</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">139****9002</span>
+            </div>
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">湿热质</span>
+            </div>
+            <div class="text-sm text-on-surface truncate" title="胃脘胀满一月余">胃脘胀满一月余</div>
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-10-11</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第2次就诊</div>
+            </div>
+            <a href="patient-detail.html?id=2" id="btn-view-2" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 列表-患者3 张丽华 -->
+      <div id="patient-card-3" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-base font-semibold shrink-0">张</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">张丽华</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">38岁 · 女</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">137****7003</span>
+            </div>
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">气郁质</span>
+            </div>
+            <div class="text-sm text-on-surface truncate" title="失眠多梦伴头晕">失眠多梦伴头晕</div>
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-10-12</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第1次就诊</div>
+            </div>
+            <a href="patient-detail.html?id=3" id="btn-view-3" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 列表-患者4 陈志强 -->
+      <div id="patient-card-4" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-base font-semibold shrink-0">陈</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">陈志强</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">47岁 · 男</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">136****6004</span>
+            </div>
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">阳虚质</span>
+            </div>
+            <div class="text-sm text-on-surface truncate" title="腰膝酸软乏力">腰膝酸软乏力</div>
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-10-08</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第5次就诊</div>
+            </div>
+            <a href="patient-detail.html?id=4" id="btn-view-4" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 列表-患者5 刘美玲 -->
+      <div id="patient-card-5" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-base font-semibold shrink-0">刘</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">刘美玲</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">29岁 · 女</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">135****5005</span>
+            </div>
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">气郁质</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">血瘀质</span>
+            </div>
+            <div class="text-sm text-on-surface truncate" title="经前乳胀痛经">经前乳胀痛经</div>
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-10-09</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第2次就诊</div>
+            </div>
+            <a href="patient-detail.html?id=5" id="btn-view-5" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 列表-患者6 周建华（含禁忌 banner） -->
+      <div id="patient-card-6" class="patient-card bg-surface rounded-xl shadow-card overflow-hidden">
+        <!-- 禁忌 banner -->
+        <div class="bg-error/10 border-l-4 border-error text-error px-4 py-2.5 text-sm flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+          <span class="font-medium">医疗禁忌：阿司匹林过敏</span>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-[180px_160px_180px_minmax(0,1fr)_140px_auto] gap-4 items-center">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-base font-semibold shrink-0">周</div>
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-on-surface truncate">周建华</div>
+                <div class="text-xs text-on-surface-variant mt-0.5">55岁 · 男</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-sm text-on-surface-variant min-w-0">
+              <i data-lucide="phone" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">134****4006</span>
+            </div>
+            <div class="flex flex-wrap gap-1 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-container/50 text-primary">阴虚质</span>
+            </div>
+            <div class="text-sm text-on-surface truncate" title="头晕耳鸣三月">头晕耳鸣三月</div>
+            <div class="min-w-0">
+              <div class="text-sm text-on-surface">2025-09-28</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">第4次就诊</div>
+            </div>
+            <a href="patient-detail.html?id=6" id="btn-view-6" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors shrink-0">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>查看档案
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 分页器 -->
+    <div class="flex items-center justify-between mt-6 pt-4 border-t border-outline-variant/20">
+      <span id="pagination-info" class="text-sm text-on-surface-variant">第 1-6 条 / 共 128 条</span>
+      <div class="flex items-center gap-2">
+        <button id="btn-prev-page" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-on-surface-variant bg-surface border border-outline-variant/30 hover:bg-surface-container transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>上一页
+        </button>
+        <button id="btn-next-page" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-on-surface bg-surface border border-outline-variant/30 hover:bg-surface-container transition-colors">
+          下一页<i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+    $(function() {
+      // 新增患者按钮 - 后续应实现：
+      // 1. 弹出新增患者表单对话框（模态框）
+      // 2. 包含字段：姓名、性别、年龄、电话、身份证号、主诉、现病史、既往史、过敏史
+      // 3. 体质类型多选（气虚质/阳虚质/阴虚质/痰湿质/湿热质/血瘀质/气郁质/特禀质/平和质）
+      // 4. 提交保存到患者列表，关闭模态框，刷新当前列表
+      $('#btn-add-patient').on('click', function() {
+        console.log('新增患者 - 弹出表单对话框');
+      });
+
+      // 搜索框 - 实时过滤逻辑：
+      // 1. 监听 input 事件
+      // 2. 遍历 #patient-list 下所有 .patient-card
+      // 3. 检查卡片中姓名/电话是否包含输入值（不区分大小写）
+      // 4. 匹配则显示卡片，不匹配则隐藏
+      // 5. 更新 #pagination-info 文字为"第 X-Y 条 / 共 Z 条"
+      $('#search-patient').on('input', function() {
+        const keyword = $(this).val().trim().toLowerCase();
+        console.log('搜索关键词:', keyword);
+        // 实际过滤逻辑后续接入
+      });
+
+      // 筛选 chip 切换 - 后续应实现：
+      // 1. "全部" - 显示所有患者
+      // 2. "有禁忌" - 仅显示包含 .allergy-banner 子元素的患者
+      // 3. "待复诊" - 仅显示距离上次就诊超过 N 天的患者
+      // 4. 切换后重新计算分页与统计
+      $('#chip-all, #chip-allergy, #chip-followup').on('click', function() {
+        const $self = $(this);
+        const $siblings = $self.siblings('button');
+        $siblings.removeClass('bg-primary text-on-primary').addClass('bg-surface-container text-on-surface-variant hover:bg-surface-container-high');
+        $self.removeClass('bg-surface-container text-on-surface-variant hover:bg-surface-container-high').addClass('bg-primary text-on-primary');
+        console.log('切换筛选:', $self.text().trim().split(/\s+/)[0]);
+      });
+
+      // 分页 - 后续应实现：
+      // 1. 维护 currentPage、pageSize 状态
+      // 2. 上一页：currentPage--，重新请求并渲染当前页的 6 条数据
+      // 3. 下一页：currentPage++，重新请求并渲染
+      // 4. 边界处理：currentPage=1 时禁用上一页；最后一页时禁用下一页
+      // 5. 更新 #pagination-info 文字为"第 X-Y 条 / 共 Z 条"
+      $('#btn-prev-page').on('click', function() {
+        console.log('上一页 - 当前页 1（边界已禁用）');
+      });
+      $('#btn-next-page').on('click', function() {
+        console.log('下一页 - 跳转到第 2 页');
+      });
+    });
+  </script>
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

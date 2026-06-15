@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>账号设置 · 本草医案</title>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（中医绿，emerald 系） === */
+      --color-primary:               #059669;
+      --color-primary-container:     #D1FAE5;
+      --color-on-primary:            #ffffff;
+      /* === 背景 / 表面（古书米白色调） === */
+      --color-background:                 #FAF9F6;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F1EFEC;
+      --color-surface-container-high:     #E8E5E0;
+      --color-surface-container-highest:  #DDD9D2;
+      /* === 文字 === */
+      --color-on-surface:           #1C1917;
+      --color-on-surface-variant:   #78716C;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #D6D3D1;
+      --color-outline-variant:  #E7E5E4;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(28,25,23,0.06);
+      --shadow-float:  0 10px 25px rgba(28,25,23,0.10);
+      --shadow-dialog: 0 25px 50px rgba(28,25,23,0.15);
+      /* === 字体 === */
+      --font-sans: "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+  </style>
+
+  <style>
+    body { font-family: var(--font-sans); }
+    /* 滚动条美化 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-on-surface-variant); }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface">
+
+  <!-- @nav:start 顶部导航 -->
+  <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/30">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <!-- Logo -->
+      <a href="home.html" class="flex items-center gap-2.5 shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-card">
+          <i data-lucide="leaf" class="w-5 h-5"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="text-base font-bold text-on-surface">本草医案</div>
+          <div class="text-[10px] text-on-surface-variant tracking-wider font-medium">TCM · CLINIC</div>
+        </div>
+      </a>
+
+      <!-- 顶部导航 -->
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>仪表盘
+        </a>
+        <a href="patient-list.html" class="px-3.5 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md transition-colors flex items-center gap-1.5">
+          <i data-lucide="users" class="w-4 h-4"></i>患者
+        </a>
+        <a href="account.html" class="px-3.5 py-1.5 text-sm font-medium text-primary bg-primary/10 rounded-md flex items-center gap-1.5" aria-current="page">
+          <i data-lucide="user-cog" class="w-4 h-4"></i>账号设置
+        </a>
+      </nav>
+
+      <!-- 用户菜单 -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="relative w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full ring-2 ring-surface"></span>
+        </button>
+        <div class="flex items-center gap-2.5 pl-3 border-l border-outline-variant/30">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-semibold">初</div>
+          <div class="text-sm font-medium text-on-surface">小初</div>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!-- @main-content:start -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- 页面顶部标题 -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-on-surface">账号设置</h1>
+      <p class="text-sm text-on-surface-variant mt-1">管理个人资料、账号安全、通知提醒与诊所成员协作</p>
+    </div>
+
+    <div class="flex gap-8 items-start">
+
+      <!-- 左侧导航（桌面端侧边栏） -->
+      <aside class="w-60 shrink-0 sticky top-24">
+        <div class="bg-surface rounded-xl shadow-card p-2 space-y-0.5">
+          <a href="#profile" id="side-profile" class="flex items-center gap-3 px-3 py-2.5 rounded-md bg-primary/10 text-primary font-medium text-sm transition-colors" aria-current="page">
+            <i data-lucide="user" class="w-4 h-4"></i>个人资料
+          </a>
+          <a href="#security" id="side-security" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>账号与安全
+          </a>
+          <a href="#notifications" id="side-notifications" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors">
+            <i data-lucide="bell" class="w-4 h-4"></i>通知提醒
+          </a>
+          <a href="#data" id="side-data" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors">
+            <i data-lucide="database" class="w-4 h-4"></i>数据与备份
+          </a>
+        </div>
+
+        <!-- 角色权限说明 -->
+        <div class="mt-4 bg-surface-container rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="info" class="w-4 h-4 text-on-surface-variant"></i>
+            <h3 class="text-sm font-semibold text-on-surface">角色权限说明</h3>
+          </div>
+          <ul class="space-y-2.5 text-xs text-on-surface-variant">
+            <li class="flex gap-2">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0"></span>
+              <span><span class="font-medium text-on-surface">管理员</span>：所有权限</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-primary-container mt-1.5 shrink-0"></span>
+              <span><span class="font-medium text-on-surface">医师</span>：病历/处方全权、不能管理账号</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0"></span>
+              <span><span class="font-medium text-on-surface">助理医师</span>：辅助录入、不能修改已确认病历</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-surface-container-high mt-1.5 shrink-0"></span>
+              <span><span class="font-medium text-on-surface">前台</span>：仅患者管理、不能看病历</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- 右侧主内容区 -->
+      <div class="flex-1 min-w-0 space-y-6">
+
+        <!-- 1. 顶部头像区 -->
+        <section id="profile" class="bg-surface rounded-xl shadow-card p-6">
+          <div class="flex items-center gap-5">
+            <div class="w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center text-3xl font-bold shadow-card">王</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <h2 class="text-xl font-bold text-on-surface">王志远</h2>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-on-primary text-xs font-semibold">
+                  <i data-lucide="stethoscope" class="w-3 h-3"></i>主治医师
+                </span>
+              </div>
+              <p class="text-sm text-on-surface-variant mt-1">本草堂中医诊所 · 脾胃病科</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">执业证编号：1413205********</p>
+            </div>
+            <button id="btn-edit-avatar" class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2 shrink-0">
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>编辑资料
+            </button>
+          </div>
+        </section>
+
+        <!-- 2. 基本信息表 -->
+        <section class="bg-surface rounded-xl shadow-card p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="text-base font-semibold text-on-surface">基本信息</h3>
+              <p class="text-xs text-on-surface-variant mt-0.5">用于患者档案、处方笺与对外展示</p>
+            </div>
+            <button id="btn-save-profile" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>保存修改
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+            <!-- 姓名 -->
+            <div>
+              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">姓名</label>
+              <div class="relative">
+                <i data-lucide="user" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input id="input-name" type="text" value="王志远" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+            <!-- 手机号 -->
+            <div>
+              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">手机号</label>
+              <div class="relative">
+                <i data-lucide="phone" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input id="input-phone" type="text" value="138****6688" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+            <!-- 邮箱 -->
+            <div>
+              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">邮箱</label>
+              <div class="relative">
+                <i data-lucide="mail" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input id="input-email" type="email" value="wangzy@bencao.cn" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+            <!-- 执业地点 -->
+            <div>
+              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">执业地点</label>
+              <div class="relative">
+                <i data-lucide="map-pin" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input id="input-clinic" type="text" value="本草堂中医诊所 · 南京鼓楼店" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+            <!-- 擅长方向（textarea 跨两列） -->
+            <div class="col-span-2">
+              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">擅长方向</label>
+              <textarea id="textarea-specialty" rows="3" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none">脾胃病、慢性胃炎、消化不良、失眠多梦、亚健康调理。师从江苏省名中医张守琳教授，临证十余年。</textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. 专业认证 -->
+        <section class="bg-surface rounded-xl shadow-card p-6">
+          <div class="mb-4">
+            <h3 class="text-base font-semibold text-on-surface">专业认证</h3>
+            <p class="text-xs text-on-surface-variant mt-0.5">资质凭证仅诊所管理员可见，用于合规审计</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <!-- 医师资格证 -->
+            <div id="cert-quali" class="border border-outline-variant/30 rounded-lg p-4 flex items-center gap-4 hover:border-primary/40 transition-colors">
+              <div class="w-11 h-11 rounded-lg bg-primary-container text-primary flex items-center justify-center shrink-0">
+                <i data-lucide="award" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">医师资格证</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">
+                    <span class="w-1.5 h-1.5 rounded-full bg-success"></span>已认证
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">证号 201********** 3127 · 2024-03 复审通过</p>
+              </div>
+              <button id="btn-view-cert-quali" class="text-primary text-sm font-medium hover:underline shrink-0">查看</button>
+            </div>
+            <!-- 执业证 -->
+            <div id="cert-license" class="border border-outline-variant/30 rounded-lg p-4 flex items-center gap-4 hover:border-primary/40 transition-colors">
+              <div class="w-11 h-11 rounded-lg bg-primary-container text-primary flex items-center justify-center shrink-0">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">执业证</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">
+                    <span class="w-1.5 h-1.5 rounded-full bg-success"></span>已认证
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">证号 1413205******** · 有效期至 2027-08</p>
+              </div>
+              <button id="btn-view-cert-license" class="text-primary text-sm font-medium hover:underline shrink-0">查看</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. 底部账号列表 section（多账号管理） -->
+        <section id="team" class="bg-surface rounded-xl shadow-card p-6">
+          <div class="flex items-end justify-between gap-4 mb-5">
+            <div>
+              <h3 class="text-base font-semibold text-on-surface">诊所成员 (4)</h3>
+              <p class="text-xs text-on-surface-variant mt-1">支持多人协同，角色权限分级</p>
+            </div>
+            <button id="btn-add-member" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2 shrink-0">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加成员
+            </button>
+          </div>
+
+          <div id="member-list" class="space-y-3">
+            <!-- 成员-1 王志远（admin） -->
+            <div id="member-1" class="member-card bg-surface-container border border-outline-variant/20 rounded-xl p-4 flex items-center gap-4 hover:shadow-card hover:-translate-y-0.5 transition-all">
+              <div class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center text-base font-semibold shrink-0">王</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">王志远</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-primary text-on-primary">主治医师 · 管理员</span>
+                  <span class="inline-flex items-center gap-1.5 text-xs text-on-surface-variant">
+                    <span class="w-2 h-2 rounded-full bg-success"></span>在线
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">wangzy@bencao.cn</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button class="member-action-edit text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="编辑">
+                  <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-reset text-on-surface-variant hover:text-warning hover:bg-warning/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="重置密码">
+                  <i data-lucide="key-round" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-disable text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="禁用">
+                  <i data-lucide="user-x" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-delete text-on-surface-variant hover:text-error hover:bg-error/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="删除">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 成员-2 林晓梅（医师） -->
+            <div id="member-2" class="member-card bg-surface-container border border-outline-variant/20 rounded-xl p-4 flex items-center gap-4 hover:shadow-card hover:-translate-y-0.5 transition-all">
+              <div class="w-11 h-11 rounded-full bg-primary-container text-primary flex items-center justify-center text-base font-semibold shrink-0">林</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">林晓梅</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-primary-container text-primary">医师</span>
+                  <span class="inline-flex items-center gap-1.5 text-xs text-on-surface-variant">
+                    <span class="w-2 h-2 rounded-full bg-warning"></span>2 小时前
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">linxm@bencao.cn</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button class="member-action-edit text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="编辑">
+                  <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-reset text-on-surface-variant hover:text-warning hover:bg-warning/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="重置密码">
+                  <i data-lucide="key-round" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-disable text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="禁用">
+                  <i data-lucide="user-x" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-delete text-on-surface-variant hover:text-error hover:bg-error/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="删除">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 成员-3 张建国（助理医师） -->
+            <div id="member-3" class="member-card bg-surface-container border border-outline-variant/20 rounded-xl p-4 flex items-center gap-4 hover:shadow-card hover:-translate-y-0.5 transition-all">
+              <div class="w-11 h-11 rounded-full bg-warning/15 text-warning flex items-center justify-center text-base font-semibold shrink-0">张</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">张建国</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning">助理医师</span>
+                  <span class="inline-flex items-center gap-1.5 text-xs text-on-surface-variant">
+                    <span class="w-2 h-2 rounded-full bg-surface-container-high"></span>昨天
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">zhangjg@bencao.cn</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button class="member-action-edit text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="编辑">
+                  <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-reset text-on-surface-variant hover:text-warning hover:bg-warning/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="重置密码">
+                  <i data-lucide="key-round" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-disable text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="禁用">
+                  <i data-lucide="user-x" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-delete text-on-surface-variant hover:text-error hover:bg-error/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="删除">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 成员-4 李美玲（前台） -->
+            <div id="member-4" class="member-card bg-surface-container border border-outline-variant/20 rounded-xl p-4 flex items-center gap-4 hover:shadow-card hover:-translate-y-0.5 transition-all">
+              <div class="w-11 h-11 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center text-base font-semibold shrink-0">李</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-on-surface">李美玲</span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface">前台</span>
+                  <span class="inline-flex items-center gap-1.5 text-xs text-on-surface-variant">
+                    <span class="w-2 h-2 rounded-full bg-surface-container-high"></span>3 天前
+                  </span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 truncate">liml@bencao.cn</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button class="member-action-edit text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="编辑">
+                  <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-reset text-on-surface-variant hover:text-warning hover:bg-warning/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="重置密码">
+                  <i data-lucide="key-round" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-disable text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="禁用">
+                  <i data-lucide="user-x" class="w-4 h-4"></i>
+                </button>
+                <button class="member-action-delete text-on-surface-variant hover:text-error hover:bg-error/10 rounded-md w-8 h-8 flex items-center justify-center transition-colors" title="删除">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+    $(function() {
+      // 左侧导航切换
+      // 应实现：点击左侧导航项时，移除所有项的激活样式，添加目标项的激活样式（bg-primary/10 + text-primary + aria-current="page"），并根据目标锚点平滑滚动到对应 section。当前仅个人资料区有内容，其他 section 是占位锚点。
+      $('#side-profile, #side-security, #side-notifications, #side-data').on('click', function(e) {
+        e.preventDefault();
+        var $items = $('#side-profile, #side-security, #side-notifications, #side-data');
+        $items.removeClass('bg-primary/10 text-primary').addClass('text-on-surface-variant');
+        $items.removeAttr('aria-current');
+        $(this).addClass('bg-primary/10 text-primary').removeClass('text-on-surface-variant');
+        $(this).attr('aria-current', 'page');
+        var target = $(this).attr('href');
+        if (target && target !== '#') {
+          $('html, body').animate({ scrollTop: $(target).offset().top - 96 }, 300);
+        }
+      });
+
+      // 编辑资料按钮
+      $('#btn-edit-avatar').on('click', function() {
+        console.log('编辑资料：应实现 - 弹出资料编辑模态框，包含姓名、手机、邮箱、擅长方向、头像裁剪上传等字段，保存后更新顶部头像区与表单');
+      });
+
+      // 保存修改
+      $('#btn-save-profile').on('click', function() {
+        // 应实现：表单字段非空校验 + 邮箱/手机号格式校验 + 成功 toast 提示 + 同步更新顶部头像区的姓名
+        console.log('保存个人资料：姓名=' + $('#input-name').val() + '，邮箱=' + $('#input-email').val());
+      });
+
+      // 查看证书
+      $('#btn-view-cert-quali, #btn-view-cert-license').on('click', function() {
+        console.log('查看证书：应实现 - 弹出大图预览模态框，可缩放查看原件');
+      });
+
+      // 添加成员
+      $('#btn-add-member').on('click', function() {
+        // 应实现：弹出添加成员模态框 - 字段包括姓名、邮箱、角色下拉（管理员/医师/助理医师/前台）、临时密码；
+        // 提交后调用接口，列表新增一行；新成员收到邀请邮件
+        console.log('添加成员：应实现 - 弹窗表单 + 角色下拉 + 邀请邮件');
+      });
+
+      // 成员-编辑
+      $('#member-list').on('click', '.member-action-edit', function() {
+        var memberId = $(this).closest('.member-card').attr('id');
+        console.log('编辑成员 ' + memberId + '：应实现 - 弹窗显示该成员信息，可修改姓名、邮箱、角色；不能修改自己为非管理员');
+      });
+
+      // 成员-重置密码
+      $('#member-list').on('click', '.member-action-reset', function() {
+        var $card = $(this).closest('.member-card');
+        var name = $card.find('span.font-semibold').text();
+        console.log('重置 ' + name + ' 的密码：应实现 - 弹窗确认 + 生成临时密码或发送重置链接邮件');
+      });
+
+      // 成员-禁用
+      $('#member-list').on('click', '.member-action-disable', function() {
+        var $card = $(this).closest('.member-card');
+        var name = $card.find('span.font-semibold').text();
+        console.log('禁用 ' + name + '：应实现 - 弹窗确认（管理员不可被禁用） + 禁用后该账号无法登录，列表状态徽标切换为"已禁用"灰色');
+      });
+
+      // 成员-删除
+      $('#member-list').on('click', '.member-action-delete', function() {
+        var $card = $(this).closest('.member-card');
+        var name = $card.find('span.font-semibold').text();
+        console.log('删除 ' + name + '：应实现 - 弹窗二次确认（输入成员姓名验证） + 删除后从列表移除 + 标题计数 -1');
+      });
+    });
+  </script>
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>患者档案详情 · 本草医案</title>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <link href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（中医绿，emerald 系） === */
+      --color-primary:               #059669;
+      --color-primary-container:     #D1FAE5;
+      --color-on-primary:            #ffffff;
+      /* === 背景 / 表面（古书米白色调） === */
+      --color-background:                 #FAF9F6;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F1EFEC;
+      --color-surface-container-high:     #E8E5E0;
+      --color-surface-container-highest:  #DDD9D2;
+      /* === 文字 === */
+      --color-on-surface:           #1C1917;
+      --color-on-surface-variant:   #78716C;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #D6D3D1;
+      --color-outline-variant:  #E7E5E4;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(28,25,23,0.06);
+      --shadow-float:  0 10px 25px rgba(28,25,23,0.10);
+      --shadow-dialog: 0 25px 50px rgba(28,25,23,0.15);
+      /* === 字体 === */
+      --font-sans: "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+  </style>
+
+  <style>
+    body { font-family: var(--font-sans); }
+    /* 滚动条美化 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-on-surface-variant); }
+  </style>
+
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface">
+
+  <!-- @nav:start 简化版 Header（二级页 - 专注操作页） -->
+  <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/30">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="patient-list.html" class="w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+          <div class="text-base font-bold text-on-surface">患者档案详情</div>
+          <div class="text-xs text-on-surface-variant">返回患者列表</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="px-3 py-1.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors">
+          <i data-lucide="printer" class="w-4 h-4"></i>打印
+        </button>
+        <button class="px-3 py-1.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors">
+          <i data-lucide="download" class="w-4 h-4"></i>导出 PDF
+        </button>
+        <a href="record-edit.html" class="px-4 py-1.5 text-sm font-medium bg-primary text-on-primary hover:opacity-90 rounded-md flex items-center gap-1.5 transition-colors">
+          <i data-lucide="plus" class="w-4 h-4"></i>新建病历
+        </a>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!-- @main-content:start -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- 1. 患者基本信息卡 -->
+    <section class="bg-surface rounded-2xl shadow-card overflow-hidden">
+      <!-- 顶部红色医疗禁忌 Banner -->
+      <div class="bg-error/8 border-b border-error/20 px-6 py-3 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-error/15 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-error"></i>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-sm font-semibold text-error">医疗禁忌</span>
+          <span class="text-sm text-on-surface">青霉素过敏</span>
+          <span class="text-on-surface-variant/50">·</span>
+          <span class="text-sm text-on-surface">磺胺类过敏</span>
+        </div>
+      </div>
+
+      <!-- 主体信息 -->
+      <div class="p-6">
+        <div class="grid grid-cols-12 gap-6">
+          <!-- 左侧：头像 + 基本信息 -->
+          <div class="col-span-12 md:col-span-4 flex items-start gap-4">
+            <div class="w-20 h-20 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-3xl font-bold shrink-0 ring-4 ring-surface-container">
+              秀
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-2xl font-bold text-on-surface">王秀英</h1>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-pink-50 text-pink-600">女</span>
+              </div>
+              <div class="mt-2 flex flex-col gap-1.5">
+                <div class="flex items-center gap-1.5 text-sm text-on-surface-variant">
+                  <i data-lucide="cake" class="w-3.5 h-3.5"></i>
+                  <span>62 岁</span>
+                  <span class="text-on-surface-variant/40">·</span>
+                  <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                  <span>138 **** 5621</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-sm text-on-surface-variant">
+                  <i data-lucide="hash" class="w-3.5 h-3.5"></i>
+                  <span>病历号 P-20251008-003</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 中间：职业 / 婚育 / 过敏史 -->
+          <div class="col-span-12 md:col-span-4 grid grid-cols-1 gap-3.5">
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="briefcase" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div class="text-sm">
+                <span class="text-on-surface-variant">职业：</span>
+                <span class="text-on-surface font-medium">退休教师</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="heart" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div class="text-sm">
+                <span class="text-on-surface-variant">婚育：</span>
+                <span class="text-on-surface font-medium">已婚已育（一子一女）</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="shield-alert" class="w-4 h-4 text-error mt-0.5 shrink-0"></i>
+              <div class="text-sm flex items-center gap-1.5 flex-wrap">
+                <span class="text-on-surface-variant">过敏史：</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-error/10 text-error">青霉素</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-error/10 text-error">磺胺类</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：就诊统计 -->
+          <div class="col-span-12 md:col-span-4 md:border-l md:border-outline-variant/30 md:pl-6">
+            <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">就诊统计</div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <div class="text-2xl font-bold text-primary leading-none">3</div>
+                <div class="text-xs text-on-surface-variant mt-1">累计就诊</div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface leading-none">2025-08-15</div>
+                <div class="text-xs text-on-surface-variant mt-1">首次就诊</div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface leading-none">2025-10-10</div>
+                <div class="text-xs text-on-surface-variant mt-1">最近就诊</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 体质 & 辨证标签 -->
+    <section class="mt-6 bg-surface rounded-2xl shadow-card p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="sparkles" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-base font-semibold text-on-surface">中医体质</h2>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-container text-primary">气虚质</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-container text-primary">痰湿质</span>
+            <span class="inline-flex items-center px-2 py-1 rounded-sm text-xs text-on-surface-variant">基于《中医体质分类与判定》评估</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="leaf" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-base font-semibold text-on-surface">当前辨证</h2>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning/15 text-warning">脾虚湿困</span>
+            <span class="text-xs text-on-surface-variant">证型持续 3 次就诊，治法以健脾化湿为主</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 病历时间轴（核心） -->
+    <section class="mt-8">
+      <div class="flex items-end justify-between mb-1">
+        <div>
+          <h2 class="text-xl font-bold text-on-surface">就诊记录时间轴</h2>
+          <p class="text-sm text-on-surface-variant mt-1">从初诊到最新一次复诊，完整保留所有诊疗信息</p>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+          <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+          <span>共 4 次诊疗记录</span>
+        </div>
+      </div>
+
+      <!-- 时间轴 -->
+      <div class="relative mt-6">
+        <!-- 时间轴竖线 -->
+        <div class="absolute left-[19px] top-2 bottom-2 w-px bg-outline-variant" aria-hidden="true"></div>
+
+        <div class="space-y-6">
+
+          <!-- 时间轴 - 病历1：第3次 复诊（最新，primary 圆点） -->
+          <div class="relative flex gap-5">
+            <!-- 圆点 -->
+            <div class="relative shrink-0 mt-5">
+              <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center text-sm font-semibold shadow-card ring-4 ring-background">3</div>
+            </div>
+            <!-- 卡片 -->
+            <div class="flex-1 bg-surface rounded-xl shadow-card p-5">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-on-surface">第 3 次就诊</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container text-on-surface">复诊</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">最新</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span>2025-10-10（周五）14:30 · 诊室 2</span>
+                    <span class="text-on-surface-variant/40">·</span>
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    <span>主治医师：林承志</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-3">
+                <!-- 主诉 -->
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">主诉</div>
+                  <p class="text-sm text-on-surface">咳嗽减轻，痰量减少，夜间偶有轻咳</p>
+                </div>
+                <!-- 关键体征 -->
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">关键体征</div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="activity" class="w-3 h-3 mr-1 text-on-surface-variant"></i>脉细
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="circle-dot" class="w-3 h-3 mr-1 text-on-surface-variant"></i>舌淡红苔薄白
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="smile" class="w-3 h-3 mr-1 text-on-surface-variant"></i>面色好转
+                    </span>
+                  </div>
+                </div>
+                <!-- 辨证 + 治法 -->
+                <div class="flex items-center gap-4 text-sm">
+                  <div>
+                    <span class="text-on-surface-variant">辨证：</span>
+                    <span class="text-on-surface font-medium">脾虚湿困（续）</span>
+                  </div>
+                  <div class="h-3 w-px bg-outline-variant"></div>
+                  <div>
+                    <span class="text-on-surface-variant">治法：</span>
+                    <span class="text-on-surface font-medium">健脾益气，化湿和中</span>
+                  </div>
+                </div>
+                <!-- 处方摘要 -->
+                <div class="flex items-center gap-2 p-3 bg-primary-container/40 rounded-md">
+                  <i data-lucide="pill" class="w-4 h-4 text-primary shrink-0"></i>
+                  <div class="text-sm text-on-surface">
+                    <span class="font-medium">处方摘要：</span>中药 10 味 / 7 剂 + 艾灸足三里（双侧）
+                  </div>
+                </div>
+              </div>
+
+              <!-- 底部操作 -->
+              <div class="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
+                <button id="btn-view-record-3" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  查看完整病历 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="btn-copy-record-3" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>复制此次为复诊模板
+                </button>
+                <div class="ml-auto text-xs text-on-surface-variant">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 inline -mt-0.5 text-success"></i>
+                  患者已确认回访
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 时间轴 - 病历2：第2次 复诊 -->
+          <div class="relative flex gap-5">
+            <div class="relative shrink-0 mt-5">
+              <div class="w-10 h-10 rounded-full bg-surface text-on-surface flex items-center justify-center text-sm font-semibold ring-2 ring-outline-variant/50 ring-offset-2 ring-offset-background">2</div>
+            </div>
+            <div class="flex-1 bg-surface rounded-xl shadow-card p-5">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-on-surface">第 2 次就诊</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container text-on-surface">复诊</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span>2025-09-22（周一）10:15 · 诊室 1</span>
+                    <span class="text-on-surface-variant/40">·</span>
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    <span>主治医师：林承志</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-3">
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">主诉</div>
+                  <p class="text-sm text-on-surface">咳嗽减轻，仍有痰，痰白稀较前减少</p>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">关键体征</div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="activity" class="w-3 h-3 mr-1 text-on-surface-variant"></i>脉弦细
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="circle-dot" class="w-3 h-3 mr-1 text-on-surface-variant"></i>舌淡胖
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="smile" class="w-3 h-3 mr-1 text-on-surface-variant"></i>面色萎黄
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                  <div>
+                    <span class="text-on-surface-variant">辨证：</span>
+                    <span class="text-on-surface font-medium">脾虚湿困</span>
+                  </div>
+                  <div class="h-3 w-px bg-outline-variant"></div>
+                  <div>
+                    <span class="text-on-surface-variant">治法：</span>
+                    <span class="text-on-surface font-medium">健脾化湿，止咳化痰</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-3 bg-primary-container/40 rounded-md">
+                  <i data-lucide="pill" class="w-4 h-4 text-primary shrink-0"></i>
+                  <div class="text-sm text-on-surface">
+                    <span class="font-medium">处方摘要：</span>中药 12 味 / 7 剂（党参、白术、茯苓、甘草、陈皮、半夏、杏仁、薏苡仁、砂仁、木香、桔梗、甘草）
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
+                <button id="btn-view-record-2" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  查看完整病历 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="btn-copy-record-2" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>复制此次为复诊模板
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 时间轴 - 病历3：第2次 复诊 -->
+          <div class="relative flex gap-5">
+            <div class="relative shrink-0 mt-5">
+              <div class="w-10 h-10 rounded-full bg-surface text-on-surface flex items-center justify-center text-sm font-semibold ring-2 ring-outline-variant/50 ring-offset-2 ring-offset-background">2</div>
+            </div>
+            <div class="flex-1 bg-surface rounded-xl shadow-card p-5">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-on-surface">第 2 次就诊</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container text-on-surface">复诊</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span>2025-09-05（周五）15:00 · 诊室 1</span>
+                    <span class="text-on-surface-variant/40">·</span>
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    <span>主治医师：林承志</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-3">
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">主诉</div>
+                  <p class="text-sm text-on-surface">服药后胃脘舒，大便成形，日 1 次</p>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">关键体征</div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="activity" class="w-3 h-3 mr-1 text-on-surface-variant"></i>脉细
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="circle-dot" class="w-3 h-3 mr-1 text-on-surface-variant"></i>舌淡
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="smile" class="w-3 h-3 mr-1 text-on-surface-variant"></i>面色转润
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                  <div>
+                    <span class="text-on-surface-variant">辨证：</span>
+                    <span class="text-on-surface font-medium">脾虚湿困</span>
+                  </div>
+                  <div class="h-3 w-px bg-outline-variant"></div>
+                  <div>
+                    <span class="text-on-surface-variant">治法：</span>
+                    <span class="text-on-surface font-medium">健脾益气，化湿和中</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-3 bg-primary-container/40 rounded-md">
+                  <i data-lucide="pill" class="w-4 h-4 text-primary shrink-0"></i>
+                  <div class="text-sm text-on-surface">
+                    <span class="font-medium">处方摘要：</span>中药 12 味 / 7 剂（原方略作加减，去木香加黄芪）
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
+                <button id="btn-view-record-2b" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  查看完整病历 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="btn-copy-record-2b" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>复制此次为复诊模板
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 时间轴 - 病历4：第1次 初诊 -->
+          <div class="relative flex gap-5">
+            <div class="relative shrink-0 mt-5">
+              <div class="w-10 h-10 rounded-full bg-surface text-on-surface flex items-center justify-center text-sm font-semibold ring-2 ring-outline-variant/50 ring-offset-2 ring-offset-background">1</div>
+            </div>
+            <div class="flex-1 bg-surface rounded-xl shadow-card p-5">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-on-surface">第 1 次就诊</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">初诊</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span>2025-08-15（周五）09:30 · 诊室 1</span>
+                    <span class="text-on-surface-variant/40">·</span>
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                    <span>主治医师：林承志</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-3">
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">主诉</div>
+                  <p class="text-sm text-on-surface">咳嗽反复两周，痰白稀，量多，伴胸闷气短，乏力纳差</p>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">关键体征</div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="activity" class="w-3 h-3 mr-1 text-on-surface-variant"></i>脉沉弦
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="circle-dot" class="w-3 h-3 mr-1 text-on-surface-variant"></i>舌淡胖有齿痕苔白腻
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs bg-surface-container text-on-surface">
+                      <i data-lucide="smile" class="w-3 h-3 mr-1 text-on-surface-variant"></i>面色萎黄
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                  <div>
+                    <span class="text-on-surface-variant">辨证：</span>
+                    <span class="text-on-surface font-medium">脾虚湿困</span>
+                  </div>
+                  <div class="h-3 w-px bg-outline-variant"></div>
+                  <div>
+                    <span class="text-on-surface-variant">治法：</span>
+                    <span class="text-on-surface font-medium">健脾益气，化湿祛痰</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-3 bg-primary-container/40 rounded-md">
+                  <i data-lucide="pill" class="w-4 h-4 text-primary shrink-0"></i>
+                  <div class="text-sm text-on-surface">
+                    <span class="font-medium">处方摘要：</span>中药 12 味 / 7 剂（参苓白术散合二陈汤加减）+ 推拿 + 艾灸
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-outline-variant/40 flex items-center gap-4">
+                <button id="btn-view-record-1" class="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-1">
+                  查看完整病历 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+                <!-- 初诊不显示"复制为复诊模板"按钮 -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 主诉严重度趋势 Mini Chart -->
+      <div class="mt-8 bg-surface rounded-2xl shadow-card p-6">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="text-base font-semibold text-on-surface">主诉严重度趋势</h3>
+            <p class="text-xs text-on-surface-variant mt-0.5">基于 4 次就诊的主诉量化评估（5 分制，分数越高症状越重）</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+            <span class="inline-block w-2.5 h-2.5 rounded-sm bg-primary"></span>
+            <span>严重度评分</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-4 gap-6 items-end" id="severity-chart">
+          <!-- 柱状条 1：2025-08-15 高（4.5）-->
+          <div class="flex flex-col items-center gap-2">
+            <div class="text-sm font-semibold text-on-surface">4.5</div>
+            <div class="w-full h-32 flex items-end">
+              <div class="w-full rounded-t-md shadow-card" style="height: 90%; background: linear-gradient(180deg, #059669 0%, #10b981 100%);"></div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs font-medium text-on-surface">第 1 次</div>
+              <div class="text-[10px] text-on-surface-variant">2025-08-15</div>
+            </div>
+          </div>
+          <!-- 柱状条 2：2025-09-05 中（3.0）-->
+          <div class="flex flex-col items-center gap-2">
+            <div class="text-sm font-semibold text-on-surface">3.0</div>
+            <div class="w-full h-32 flex items-end">
+              <div class="w-full rounded-t-md shadow-card" style="height: 60%; background: linear-gradient(180deg, #059669 0%, #10b981 100%);"></div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs font-medium text-on-surface">第 2 次</div>
+              <div class="text-[10px] text-on-surface-variant">2025-09-05</div>
+            </div>
+          </div>
+          <!-- 柱状条 3：2025-09-22 中低（2.5）-->
+          <div class="flex flex-col items-center gap-2">
+            <div class="text-sm font-semibold text-on-surface">2.5</div>
+            <div class="w-full h-32 flex items-end">
+              <div class="w-full rounded-t-md shadow-card" style="height: 50%; background: linear-gradient(180deg, #059669 0%, #10b981 100%);"></div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs font-medium text-on-surface">第 2 次</div>
+              <div class="text-[10px] text-on-surface-variant">2025-09-22</div>
+            </div>
+          </div>
+          <!-- 柱状条 4：2025-10-10 低（1.5）-->
+          <div class="flex flex-col items-center gap-2">
+            <div class="text-sm font-semibold text-on-surface">1.5</div>
+            <div class="w-full h-32 flex items-end">
+              <div class="w-full rounded-t-md shadow-card" style="height: 30%; background: linear-gradient(180deg, #059669 0%, #10b981 100%);"></div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs font-medium text-on-surface">第 3 次</div>
+              <div class="text-[10px] text-on-surface-variant">2025-10-10</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 舌象 / 面相照片墙 + 5. 家族病史 & 个人史（两列布局） -->
+    <section class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 舌象/面相照片墙 -->
+      <div class="lg:col-span-2 bg-surface rounded-2xl shadow-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-semibold text-on-surface">舌象 / 面相记录</h2>
+            <p class="text-xs text-on-surface-variant mt-0.5">最近 3 次复诊的舌象照片（点击放大）</p>
+          </div>
+          <button id="btn-upload-photo" class="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>上传新照片
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-4" id="photo-gallery">
+          <!-- 照片1：2025-10-10 舌象 -->
+          <button class="photo-thumb group relative rounded-lg overflow-hidden bg-surface-container aspect-square" data-photo-id="p1">
+            <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=400&h=400&fit=crop" alt="2025-10-10 舌象记录照" data-category="其他" class="w-full h-full object-cover transition-transform group-hover:scale-105"/>
+            <div class="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent">
+              <div class="text-xs font-medium text-white">2025-10-10</div>
+              <div class="text-[10px] text-white/80">舌淡红苔薄白</div>
+            </div>
+            <div class="absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/90 text-on-surface flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+            </div>
+          </button>
+          <!-- 照片2：2025-09-22 舌象 -->
+          <button class="photo-thumb group relative rounded-lg overflow-hidden bg-surface-container aspect-square" data-photo-id="p2">
+            <img src="https://images.unsplash.com/photo-1606166325683-e6deb697d301?w=400&h=400&fit=crop" alt="2025-09-22 舌象记录照" data-category="其他" class="w-full h-full object-cover transition-transform group-hover:scale-105"/>
+            <div class="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent">
+              <div class="text-xs font-medium text-white">2025-09-22</div>
+              <div class="text-[10px] text-white/80">舌淡胖</div>
+            </div>
+            <div class="absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/90 text-on-surface flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+            </div>
+          </button>
+          <!-- 照片3：2025-08-15 舌象 -->
+          <button class="photo-thumb group relative rounded-lg overflow-hidden bg-surface-container aspect-square" data-photo-id="p3">
+            <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=400&fit=crop" alt="2025-08-15 舌象记录照" data-category="其他" class="w-full h-full object-cover transition-transform group-hover:scale-105"/>
+            <div class="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent">
+              <div class="text-xs font-medium text-white">2025-08-15</div>
+              <div class="text-[10px] text-white/80">舌淡胖有齿痕苔白腻</div>
+            </div>
+            <div class="absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/90 text-on-surface flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 家族病史 & 个人史 -->
+      <div class="bg-surface rounded-2xl shadow-card p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <i data-lucide="git-branch" class="w-4 h-4 text-primary"></i>
+          <h2 class="text-base font-semibold text-on-surface">病史与个人史</h2>
+        </div>
+
+        <!-- 家族病史 -->
+        <div class="mb-5">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">家族病史</div>
+            <span class="text-[10px] text-on-surface-variant">1 条</span>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 p-2.5 bg-surface-container rounded-md">
+              <i data-lucide="users" class="w-3.5 h-3.5 text-on-surface-variant shrink-0"></i>
+              <div class="text-sm text-on-surface">
+                <span class="font-medium">母亲</span>
+                <span class="text-on-surface-variant"> · 高血压</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-outline-variant/40 my-4"></div>
+
+        <!-- 个人史 -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">个人史</div>
+            <span class="text-[10px] text-on-surface-variant">已记录</span>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 p-2.5 bg-surface-container rounded-md">
+              <i data-lucide="cigarette-off" class="w-3.5 h-3.5 text-on-surface-variant shrink-0"></i>
+              <div class="text-sm text-on-surface">
+                <span class="font-medium">烟酒史</span>
+                <span class="text-on-surface-variant"> · 无</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-2.5 bg-surface-container rounded-md">
+              <i data-lucide="moon" class="w-3.5 h-3.5 text-on-surface-variant shrink-0"></i>
+              <div class="text-sm text-on-surface">
+                <span class="font-medium">睡眠</span>
+                <span class="text-on-surface-variant"> · 较浅，易醒</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-2.5 bg-surface-container rounded-md">
+              <i data-lucide="utensils" class="w-3.5 h-3.5 text-on-surface-variant shrink-0"></i>
+              <div class="text-sm text-on-surface">
+                <span class="font-medium">饮食偏好</span>
+                <span class="text-on-surface-variant"> · 喜温热、忌生冷</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 底部留白 -->
+    <div class="h-8"></div>
+
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+    $(function() {
+      // 查看完整病历 - 应实现：打开病历详情模态框
+      // 1. 弹出模态框显示该次就诊的完整病历内容（包括主诉、现病史、既往史、
+      //    四诊信息、辨证、治法、方剂组成与剂量、医嘱等）
+      // 2. 模态框支持"打印此页"和"导出 Word"操作
+      // 3. 模态框可滚动浏览，支持 ESC 关闭
+      $('#btn-view-record-3, #btn-view-record-2, #btn-view-record-2b, #btn-view-record-1').on('click', function() {
+        console.log('查看完整病历:', $(this).attr('id'));
+      });
+
+      // 复制此次为复诊模板 - 应实现：跳转至新建病历页并预填
+      // 1. 携带 recordId 跳转至 record-edit.html?template=<recordId>
+      // 2. 新建病历页解析模板 ID 后，从本地 mock 数据中读取该次病历内容
+      //    预填至表单（主诉、辨证、治法、处方等）
+      // 3. 处方中的中药以可编辑列表形式展示，便于医生加减药味
+      // 4. 表单顶部提示"基于 XXXX-XX-XX 病历复制而来"
+      $('#btn-copy-record-3, #btn-copy-record-2, #btn-copy-record-2b').on('click', function() {
+        const recordId = $(this).attr('id');
+        console.log('复制病历为复诊模板:', recordId);
+        window.location.href = 'record-edit.html?template=' + encodeURIComponent(recordId);
+      });
+
+      // 照片点击放大 - 应实现：打开图片预览 Lightbox
+      // 1. 在屏幕中央展示大图，支持缩放、旋转
+      // 2. 底部显示该照片对应的就诊日期、舌象描述、医嘱
+      // 3. 支持键盘 ESC 关闭、左右方向键切换上一张/下一张
+      // 4. 支持点击背景关闭
+      $('#photo-gallery').on('click', '.photo-thumb', function() {
+        const photoId = $(this).data('photo-id');
+        console.log('放大查看照片:', photoId);
+      });
+
+      // 上传新照片 - 应实现：调用文件选择 / 拍照接口
+      // 1. 弹出文件选择器（移动端可调用相机）
+      // 2. 上传后自动关联到当前就诊日期（如未指定则使用最新就诊日期）
+      // 3. 上传成功后追加到照片墙并显示"新"标签
+      $('#btn-upload-photo').on('click', function() {
+        console.log('上传新舌象/面相照片');
+      });
+
+      // 打印 - 应实现：调用浏览器打印并应用病历专用样式
+      // 1. 弹出打印对话框，自动应用 print CSS（隐藏操作按钮、调整布局）
+      // 2. 顶部增加病历抬头，底部增加医师签名区域
+      // 3. 支持选择打印机、保存为 PDF
+      $('button:has(i[data-lucide="printer"])').on('click', function() {
+        console.log('打印患者档案');
+      });
+
+      // 导出 PDF - 应实现：调用后端接口生成 PDF 文件
+      // 1. 异步请求后端生成 PDF 接口，传 patientId 参数
+      // 2. 生成完成后自动触发浏览器下载
+      // 3. 文件名格式：患者姓名_档案导出_YYYYMMDD.pdf
+      $('button:has(i[data-lucide="download"])').on('click', function() {
+        console.log('导出 PDF');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
