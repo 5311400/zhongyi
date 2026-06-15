@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>新增病历 · 本草医案</title>
+  <title>新增病历 · 王秀英 · 本草医案</title>
 
   <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
   <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
@@ -58,6 +58,30 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--color-outline); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--color-on-surface-variant); }
+    /* Chip 切换样式 */
+    .chip {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.25rem 0.75rem; border-radius: 9999px;
+      font-size: 0.8125rem; font-weight: 500; line-height: 1.25rem;
+      cursor: pointer; user-select: none;
+      transition: all 0.15s ease;
+      background-color: var(--color-surface-container);
+      color: var(--color-on-surface-variant);
+    }
+    .chip:hover { background-color: var(--color-surface-container-high); }
+    .chip.is-active {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .chip.is-active:hover { opacity: 0.9; }
+    .chip.is-danger {
+      background-color: rgba(239, 68, 68, 0.12);
+      color: var(--color-error);
+    }
+    .chip.is-danger.is-active {
+      background-color: var(--color-error);
+      color: #fff;
+    }
   </style>
 
   <script>
@@ -80,990 +104,1156 @@
 
 <body class="bg-background text-on-surface">
 
-  <!-- 简化版 header（专注操作页） -->
+  <!-- @nav:start 简化版 header（二级页 - 专注操作页） -->
   <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/30">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <a href="patient-detail.html" id="btn-back" class="w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+        <a href="patient-detail.html" id="btn-back-to-patient" class="w-9 h-9 rounded-md hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
           <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </a>
         <div>
           <div class="text-base font-bold text-on-surface">新增病历 · 王秀英</div>
-          <div class="text-xs text-on-surface-variant">第 4 次就诊 · 2025-10-16</div>
+          <div class="text-xs text-on-surface-variant">第 4 次就诊 · 2025-10-16 · 复诊</div>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-save-draft" class="px-3 py-1.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container rounded-md transition-colors">保存草稿</button>
-        <button id="btn-submit-record" class="px-4 py-1.5 text-sm font-medium bg-primary text-on-primary hover:opacity-90 rounded-md flex items-center gap-1.5 transition-colors">
+        <button id="btn-finish-save" class="px-4 py-1.5 text-sm font-medium bg-primary text-on-primary hover:opacity-90 rounded-md flex items-center gap-1.5 transition-colors">
           <i data-lucide="check" class="w-4 h-4"></i>完成并保存
         </button>
       </div>
     </div>
   </header>
+  <!-- @nav:end -->
 
   <!-- @main-content:start -->
   <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
     <!-- ========== Section 1: 基本就诊信息 ========== -->
-    <section id="section-basic" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-          <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          <i data-lucide="calendar" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">基本就诊信息</h2>
-          <p class="text-xs text-on-surface-variant">本次就诊的类型、日期与数据来源</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">基本就诊信息</h2>
+        <span class="text-xs text-on-surface-variant">·  记录本次复诊的基本信息与体征</span>
       </div>
-
-      <div class="grid grid-cols-3 gap-5">
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 grid grid-cols-12 gap-5">
         <!-- 就诊类型 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">就诊类型</label>
-          <div class="flex gap-2">
-            <label class="flex items-center gap-2 px-3 py-2 rounded-md bg-surface-container cursor-pointer">
-              <input type="radio" name="visit-type" value="初诊" class="text-primary focus:ring-primary/30" />
-              <span class="text-sm text-on-surface">初诊</span>
-            </label>
-            <label class="flex items-center gap-2 px-3 py-2 rounded-md bg-primary text-on-primary cursor-pointer">
-              <input type="radio" name="visit-type" value="复诊" checked class="text-primary focus:ring-primary/30" />
-              <span class="text-sm font-medium">复诊</span>
-            </label>
+        <div class="col-span-12 md:col-span-3">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">就诊类型</label>
+          <div id="visit-type" class="flex gap-2">
+            <button data-value="初诊" class="chip">初诊</button>
+            <button data-value="复诊" class="chip is-active">复诊</button>
           </div>
         </div>
-
         <!-- 就诊日期 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">就诊日期</label>
-          <div class="relative">
-            <input id="input-visit-date" type="date" value="2025-10-16"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <div class="col-span-12 md:col-span-3">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">就诊日期</label>
+          <input id="visit-date" type="date" value="2025-10-16" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+        </div>
+        <!-- 复诊来源 -->
+        <div class="col-span-12 md:col-span-6">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">复诊来源</label>
+          <div id="followup-source" class="flex flex-wrap gap-2">
+            <button data-value="上次病历 2025-10-10" class="chip is-active">上次病历 2025-10-10</button>
+            <button data-value="模板" class="chip">模板</button>
+            <button data-value="门诊预约" class="chip">门诊预约</button>
           </div>
         </div>
-
-        <!-- 复诊来源 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">复诊来源</label>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" data-chip-source class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">上次病历 2025-10-10</button>
-            <button type="button" data-chip-source class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">模板</button>
+        <!-- 身高 -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">身高 (cm)</label>
+          <div class="relative">
+            <i data-lucide="ruler" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="input-height" type="number" min="0" max="250" value="160" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+          </div>
+        </div>
+        <!-- 体重 -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">体重 (kg)</label>
+          <div class="relative">
+            <i data-lucide="scale" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="input-weight" type="number" min="0" max="300" step="0.1" value="55" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+          </div>
+        </div>
+        <!-- BMI 自动计算 -->
+        <div class="col-span-12 md:col-span-6">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">BMI 自动计算</label>
+          <div id="bmi-box" class="bg-surface-container rounded-md px-3 py-2 flex items-center gap-3">
+            <div class="flex items-baseline gap-1">
+              <span id="bmi-value" class="text-xl font-bold text-on-surface">21.5</span>
+              <span class="text-xs text-on-surface-variant">kg/m²</span>
+            </div>
+            <span id="bmi-tag" class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">正常</span>
+            <span class="text-xs text-on-surface-variant">参考：18.5 ~ 23.9</span>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 2: 主诉与病史 ========== -->
-    <section id="section-history" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
           <i data-lucide="file-text" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">主诉与病史</h2>
-          <p class="text-xs text-on-surface-variant">患者主诉、现病史、既往史及个人史</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">主诉与病史</h2>
+        <span class="text-xs text-on-surface-variant">·  主诉、病史及过敏情况</span>
       </div>
-
-      <div class="grid grid-cols-2 gap-5">
-        <!-- 主诉 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">主诉</label>
-          <textarea id="input-chief-complaint" rows="2" placeholder="如：咳嗽反复两周，痰白稀"
-                    class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">咳嗽反复 2 周，加重伴痰多 3 天</textarea>
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-5">
+        <!-- 主诉 + 严重度 -->
+        <div class="grid grid-cols-12 gap-5">
+          <div class="col-span-12 md:col-span-8">
+            <label class="block text-sm font-medium text-on-surface mb-1.5">主诉 <span class="text-error">*</span></label>
+            <textarea id="input-complaint" rows="2" placeholder="如：咳嗽反复两周，痰白稀" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none">咳嗽反复两周，痰白稀</textarea>
+          </div>
+          <div class="col-span-12 md:col-span-4">
+            <label class="block text-sm font-medium text-on-surface mb-1.5">严重度评分</label>
+            <div id="severity" class="flex gap-2">
+              <button data-value="轻" class="chip">轻</button>
+              <button data-value="中" class="chip is-active">中</button>
+              <button data-value="重" class="chip">重</button>
+            </div>
+          </div>
         </div>
-
         <!-- 病史补充 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">病史补充</label>
-          <textarea id="input-history-supplement" rows="2" placeholder="如：外院曾用头孢类抗生素 5 天，效不佳"
-                    class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">外院曾用头孢类抗生素 5 天，效不佳</textarea>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">病史补充</label>
+          <textarea id="input-history" rows="2" placeholder="补充其他相关病史信息" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"></textarea>
         </div>
-
         <!-- 现病史 -->
-        <div class="col-span-2">
-          <label class="block text-sm font-medium text-on-surface mb-2">现病史</label>
-          <textarea id="input-present-illness" rows="3" placeholder="详细描述本次发病经过、诊治情况等"
-                    class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">患者 2 周前受凉后出现咳嗽，痰白稀易咯出，自服"急支糖浆"后缓解不明显。3 天前咳嗽加重，痰量增多，色白黏稠，伴胸闷、气短，夜间明显。无发热、咯血、胸痛。今为进一步诊治来诊。发病以来精神可，食欲减，睡眠差，二便尚调。</textarea>
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">现病史</label>
+          <textarea id="input-present-illness" rows="2" placeholder="何时开始？有何诱因（着凉、生气、熬夜、饮食等）？变化过程？是否用药？" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none">两周前受凉后出现咳嗽，痰白稀量多，自服"急支糖浆"症状稍缓，停药后反复。近一周咳嗽减轻，痰量减少，仍有胸闷，夜间入睡困难。</textarea>
         </div>
-
         <!-- 既往史 -->
-        <div class="col-span-2">
-          <label class="block text-sm font-medium text-on-surface mb-2">既往史</label>
-          <div class="flex flex-wrap gap-2" id="chip-past-history">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">高血压</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">糖尿病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">冠心病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">脑血管病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肝病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肾病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胃病</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">哮喘</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肿瘤</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">手术史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">外伤史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">无</button>
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">既往史（多选）</label>
+          <div id="past-history" class="flex flex-wrap gap-2">
+            <button data-value="无" class="chip is-active">无</button>
+            <button data-value="高血压" class="chip">高血压</button>
+            <button data-value="糖尿病" class="chip">糖尿病</button>
+            <button data-value="冠心病" class="chip">冠心病</button>
+            <button data-value="脑血管病" class="chip">脑血管病</button>
+            <button data-value="肝病" class="chip">肝病</button>
+            <button data-value="肾病" class="chip">肾病</button>
+            <button data-value="胃病" class="chip">胃病</button>
+            <button data-value="哮喘" class="chip">哮喘</button>
+            <button data-value="肿瘤" class="chip">肿瘤</button>
+            <button data-value="手术史" class="chip">手术史</button>
+            <button data-value="外伤史" class="chip">外伤史</button>
+            <button data-value="输血史" class="chip">输血史</button>
           </div>
         </div>
-
         <!-- 家族病史 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">家族病史</label>
-          <div class="flex flex-wrap gap-2" id="chip-family-history">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">高血压家族史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">糖尿病家族史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肿瘤家族史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">过敏家族史</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">精神病家族史</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">家族病史（多选）</label>
+          <div id="family-history" class="flex flex-wrap gap-2">
+            <button data-value="无" class="chip">无</button>
+            <button data-value="高血压家族史" class="chip">高血压家族史</button>
+            <button data-value="糖尿病家族史" class="chip">糖尿病家族史</button>
+            <button data-value="肿瘤家族史" class="chip">肿瘤家族史</button>
+            <button data-value="过敏家族史" class="chip">过敏家族史</button>
+            <button data-value="精神病家族史" class="chip">精神病家族史</button>
+            <button data-value="传染病家族史" class="chip">传染病家族史</button>
           </div>
         </div>
-
+        <!-- 个人史 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">个人史</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">吸烟</span>
+              <input id="input-smoke" type="text" value="不吸烟" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">饮酒</span>
+              <input id="input-drink" type="text" value="偶饮少量黄酒" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">饮食偏嗜</span>
+              <input id="input-diet" type="text" value="喜甜食" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">睡眠</span>
+              <input id="input-sleep" type="text" value="入睡困难" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+            </div>
+          </div>
+        </div>
         <!-- 过敏/禁忌 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">过敏 / 禁忌</label>
-          <div class="flex flex-wrap gap-2 mb-2" id="chip-allergy">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">青霉素</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">磺胺类</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">无</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">过敏 / 禁忌</label>
+          <div id="allergy" class="flex flex-wrap gap-2">
+            <button data-value="无" class="chip">无</button>
+            <button data-value="青霉素" class="chip is-danger is-active">⚠ 青霉素</button>
+            <button data-value="磺胺类" class="chip is-danger is-active">⚠ 磺胺类</button>
+            <button data-value="海鲜" class="chip is-danger">⚠ 海鲜</button>
+            <button data-value="花粉" class="chip is-danger">⚠ 花粉</button>
+            <button data-value="酒精" class="chip is-danger">⚠ 酒精</button>
+            <button data-value="麝香" class="chip is-danger">⚠ 麝香</button>
           </div>
-          <input id="input-allergy-custom" type="text" placeholder="自定义过敏原..."
-                 class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <input id="input-allergy-custom" type="text" placeholder="+ 添加自定义过敏/禁忌" class="mt-2 w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30"/>
         </div>
-
-        <!-- 个人史 -->
-        <div class="col-span-2 grid grid-cols-4 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-on-surface-variant mb-1.5">吸烟</label>
-            <input id="input-smoking" type="text" value="偶尔，无固定"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-on-surface-variant mb-1.5">饮酒</label>
-            <input id="input-drinking" type="text" value="偶尔，少量"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-on-surface-variant mb-1.5">饮食偏嗜</label>
-            <input id="input-diet" type="text" value="喜甜，忌生冷"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-on-surface-variant mb-1.5">睡眠</label>
-            <input id="input-sleep" type="text" value="寐差，易醒"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-        </div>
-
         <!-- 婚育史 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">婚育史</label>
-          <input id="input-marriage" type="text" value="已婚，育 1 子 1 女，配偶及子女体健"
-                 class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <label class="block text-sm font-medium text-on-surface mb-1.5">婚育史</label>
+          <input id="input-marriage" type="text" value="已婚，育有一子一女，配偶及子女体健" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
         </div>
-
-        <!-- 月经史（仅女性） -->
+        <!-- 月经史（女性，65岁已绝经） -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">月经史 <span class="text-xs text-on-surface-variant/70 font-normal">（仅女性）</span></label>
-          <textarea id="input-menstruation" rows="2" placeholder="如：月经周期、量色质等"
-                    class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">周期 28-30 天，量中等，色暗红，有少量血块，偶有痛经。</textarea>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">
+            月经史
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-warning/15 text-warning ml-1">女性 · 已绝经</span>
+          </label>
+          <div class="bg-warning/5 border border-warning/20 rounded-md px-3 py-2 mb-3 text-xs text-on-surface-variant flex items-center gap-2">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-warning"></i>
+            患者 65 岁，已绝经 15 年（末次月经 2010 年）
+          </div>
+          <div class="grid grid-cols-3 gap-3 mb-3">
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">周期 (天)</span>
+              <input id="input-cycle" type="number" placeholder="—" value="" disabled class="w-full bg-surface-container/60 border-none rounded-md px-3 py-2 text-sm text-on-surface-variant/60 cursor-not-allowed"/>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">经期 (天)</span>
+              <input id="input-period" type="number" placeholder="—" value="" disabled class="w-full bg-surface-container/60 border-none rounded-md px-3 py-2 text-sm text-on-surface-variant/60 cursor-not-allowed"/>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">末次月经</span>
+              <input id="input-lmp" type="text" value="约 2010 年" disabled class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+            </div>
+          </div>
+          <div class="mb-3">
+            <span class="block text-xs text-on-surface-variant mb-1.5">月经情况（多选）</span>
+            <div id="menses-symptoms" class="flex flex-wrap gap-2">
+              <button data-value="痛经" class="chip" disabled>痛经</button>
+              <button data-value="血块" class="chip" disabled>血块</button>
+              <button data-value="量多" class="chip" disabled>量多</button>
+              <button data-value="量少" class="chip" disabled>量少</button>
+              <button data-value="色淡" class="chip" disabled>色淡</button>
+              <button data-value="色暗" class="chip" disabled>色暗</button>
+              <button data-value="闭经" class="chip is-active" disabled>闭经</button>
+            </div>
+          </div>
+          <div>
+            <span class="block text-xs text-on-surface-variant mb-1.5">带下（多选）</span>
+            <div id="leukorrhea" class="flex flex-wrap gap-2">
+              <button data-value="量多" class="chip">量多</button>
+              <button data-value="色黄" class="chip">色黄</button>
+              <button data-value="色白" class="chip">色白</button>
+              <button data-value="清稀" class="chip">清稀</button>
+              <button data-value="异味" class="chip">异味</button>
+            </div>
+          </div>
+        </div>
+        <!-- 小儿专用 section（条件显示 - 不适用） -->
+        <div id="pediatric-section" class="opacity-50">
+          <label class="block text-sm font-medium text-on-surface mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="baby" class="w-4 h-4 text-on-surface-variant"></i>
+            小儿专用
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-surface-container-high text-on-surface-variant ml-1">不适用（65岁）</span>
+          </label>
+          <div class="bg-surface-container/50 border border-outline-variant/30 rounded-md p-4 text-xs text-on-surface-variant flex items-center gap-2">
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+            此部分仅当患者年龄 &lt; 14 岁时显示。当前患者 65 岁，已隐藏实际填写项。
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 3: 中医十问 ========== -->
-    <section id="section-ten-questions" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
           <i data-lucide="sparkles" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">中医十问</h2>
-          <p class="text-xs text-on-surface-variant">寒热、汗、头面、胸腹、饮食、口味、寐、情志、二便</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">中医十问</h2>
+        <span class="text-xs text-on-surface-variant">·  问寒热、汗、头身、胸腹、饮食、口味、寐、情志、二便（核心问诊表）</span>
       </div>
-
-      <div class="space-y-5">
-        <!-- 寒热 -->
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-5">
+        <!-- 1. 寒热 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">① 寒热</label>
-          <div class="flex flex-wrap gap-2" id="chip-cold-heat">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">畏寒</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">畏热</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">五心烦热</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">潮热</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">寒热往来</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">① 寒热</label>
+          <div id="q-cold-heat" class="flex flex-wrap gap-2">
+            <button data-value="怕冷" class="chip is-active">怕冷</button>
+            <button data-value="怕热" class="chip">怕热</button>
+            <button data-value="怕风" class="chip">怕风</button>
+            <button data-value="寒热都有" class="chip">寒热都有</button>
+            <button data-value="手足心热" class="chip">手足心热</button>
+            <button data-value="手脚冰凉" class="chip">手脚冰凉</button>
+            <button data-value="寒热往来" class="chip">寒热往来</button>
           </div>
         </div>
-
-        <!-- 汗 -->
+        <!-- 2. 汗 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">② 汗</label>
-          <div class="flex flex-wrap gap-2" id="chip-sweat">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">自汗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">盗汗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">战汗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">头汗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">手足心汗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">无汗</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">② 汗</label>
+          <div id="q-sweat" class="flex flex-wrap gap-2">
+            <button data-value="正常" class="chip">正常</button>
+            <button data-value="白天易汗（自汗）" class="chip is-active">白天易汗（自汗）</button>
+            <button data-value="夜间盗汗" class="chip">夜间盗汗</button>
+            <button data-value="不出汗" class="chip">不出汗</button>
+            <button data-value="头汗" class="chip">头汗</button>
+            <button data-value="半身汗" class="chip">半身汗</button>
+            <button data-value="手足心汗" class="chip">手足心汗</button>
+            <button data-value="心胸汗" class="chip">心胸汗</button>
           </div>
         </div>
-
-        <!-- 头面 -->
+        <!-- 3. 头身 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">③ 头面</label>
-          <div class="flex flex-wrap gap-2" id="chip-head-face">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">头痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">头晕</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">头重</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">目眩</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">目涩</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">目赤</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">耳鸣</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">耳聋</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口干</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">口苦</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">咽干</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">咽痛</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">③ 头身</label>
+          <div id="q-head-body" class="flex flex-wrap gap-2">
+            <button data-value="头痛" class="chip">头痛</button>
+            <button data-value="头晕" class="chip is-active">头晕</button>
+            <button data-value="头重" class="chip">头重</button>
+            <button data-value="肢体沉重" class="chip">肢体沉重</button>
+            <button data-value="关节痛" class="chip">关节痛（部位可填）</button>
+            <button data-value="肌肉酸" class="chip">肌肉酸</button>
+            <button data-value="四肢麻木" class="chip">四肢麻木</button>
           </div>
         </div>
-
-        <!-- 胸腹 -->
+        <!-- 4. 胸腹 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">④ 胸腹</label>
-          <div class="flex flex-wrap gap-2" id="chip-chest-abdomen">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胸闷</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胸痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">心悸</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">心慌</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胁胀</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胁痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胃脘痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">腹胀</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">腹痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">嗳气</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">④ 胸腹</label>
+          <div id="q-chest-abdomen" class="flex flex-wrap gap-2">
+            <button data-value="胸闷" class="chip is-active">胸闷</button>
+            <button data-value="心悸" class="chip">心悸</button>
+            <button data-value="胁肋胀" class="chip">胁肋胀</button>
+            <button data-value="腹胀" class="chip">腹胀</button>
+            <button data-value="腹痛" class="chip">腹痛</button>
+            <button data-value="嗳气" class="chip">嗳气</button>
+            <button data-value="矢气" class="chip">矢气</button>
+            <button data-value="肠鸣" class="chip">肠鸣</button>
           </div>
         </div>
-
-        <!-- 饮食 -->
+        <!-- 5. 饮食 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑤ 饮食</label>
-          <div class="flex flex-wrap gap-2" id="chip-diet">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">食欲不振</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">纳呆</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">消谷善饥</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">饥不欲食</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口渴</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">喜冷饮</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">喜热饮</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑤ 饮食</label>
+          <div class="space-y-2">
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">食欲:</span>
+              <div id="q-appetite" class="inline-flex flex-wrap gap-2">
+                <button data-value="食欲好" class="chip">食欲好</button>
+                <button data-value="一般" class="chip is-active">一般</button>
+                <button data-value="差" class="chip">差</button>
+                <button data-value="易饿" class="chip">易饿</button>
+                <button data-value="厌油腻" class="chip">厌油腻</button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">饮水:</span>
+              <div id="q-drink" class="inline-flex flex-wrap gap-2">
+                <button data-value="多饮" class="chip">多饮</button>
+                <button data-value="渴不欲饮" class="chip">渴不欲饮</button>
+                <button data-value="喜热水" class="chip is-active">喜热水</button>
+                <button data-value="喜凉水" class="chip">喜凉水</button>
+              </div>
+            </div>
           </div>
         </div>
-
-        <!-- 口味 -->
+        <!-- 6. 口味 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑥ 口味</label>
-          <div class="flex flex-wrap gap-2" id="chip-taste">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口淡</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口苦</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口酸</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口甜</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口咸</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口黏腻</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">口臭</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑥ 口味</label>
+          <div id="q-taste" class="flex flex-wrap gap-2">
+            <button data-value="口苦" class="chip">口苦</button>
+            <button data-value="口黏" class="chip is-active">口黏</button>
+            <button data-value="口淡" class="chip">口淡</button>
+            <button data-value="口甜" class="chip">口甜</button>
+            <button data-value="口酸" class="chip">口酸</button>
+            <button data-value="口咸" class="chip">口咸</button>
+            <button data-value="口臭" class="chip">口臭</button>
           </div>
         </div>
-
-        <!-- 寐 -->
+        <!-- 7. 寐 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑦ 寐</label>
-          <div class="flex flex-wrap gap-2" id="chip-sleep">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">失眠</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">多梦</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">易醒</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">嗜睡</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">难以入睡</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">早醒</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑦ 寐</label>
+          <div id="q-sleep" class="flex flex-wrap gap-2">
+            <button data-value="入睡困难" class="chip is-active">入睡困难</button>
+            <button data-value="多梦" class="chip">多梦</button>
+            <button data-value="易醒" class="chip">易醒</button>
+            <button data-value="早醒" class="chip">早醒</button>
+            <button data-value="嗜睡" class="chip">嗜睡</button>
+            <button data-value="每晚睡 X 小时" class="chip">每晚睡 4-5 小时</button>
           </div>
         </div>
-
-        <!-- 情志 -->
+        <!-- 8. 情志 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑧ 情志</label>
-          <div class="flex flex-wrap gap-2" id="chip-emotion">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">急躁易怒</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">抑郁</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">焦虑</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">悲伤</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">恐惧</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑧ 情志</label>
+          <div id="q-emotion" class="flex flex-wrap gap-2">
+            <button data-value="急躁易怒" class="chip is-active">急躁易怒</button>
+            <button data-value="焦虑" class="chip">焦虑</button>
+            <button data-value="忧郁" class="chip">忧郁</button>
+            <button data-value="思虑多" class="chip">思虑多</button>
+            <button data-value="易惊" class="chip">易惊</button>
+            <button data-value="善太息" class="chip">善太息</button>
           </div>
         </div>
-
-        <!-- 二便·便 -->
+        <!-- 9. 二便·便 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑨ 二便 · 便</label>
-          <div class="flex flex-wrap gap-2" id="chip-stool">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">便秘</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">腹泻</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">大便溏</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">里急后重</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肛门灼热</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">便血</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑨ 二便 · 便</label>
+          <div id="q-stool" class="flex flex-wrap gap-2">
+            <button data-value="正常" class="chip">正常</button>
+            <button data-value="便秘" class="chip">便秘（X 天一次）</button>
+            <button data-value="腹泻" class="chip">腹泻（X 次/天）</button>
+            <button data-value="不成形" class="chip is-active">不成形</button>
+            <button data-value="黏马桶" class="chip">黏马桶</button>
+            <button data-value="干结" class="chip">干结</button>
+            <button data-value="便血" class="chip is-danger">⚠ 便血</button>
           </div>
         </div>
-
-        <!-- 二便·尿 -->
+        <!-- 10. 二便·尿 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">⑩ 二便 · 尿</label>
-          <div class="flex flex-wrap gap-2" id="chip-urine">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">尿频</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">尿急</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">尿痛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">夜尿多</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">尿黄</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">浑浊</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">⑩ 二便 · 尿</label>
+          <div id="q-urine" class="flex flex-wrap gap-2">
+            <button data-value="正常" class="chip">正常</button>
+            <button data-value="色黄" class="chip">色黄</button>
+            <button data-value="色清" class="chip">色清</button>
+            <button data-value="尿频" class="chip">尿频</button>
+            <button data-value="夜尿 2 次" class="chip is-active">夜尿 2 次</button>
+            <button data-value="尿不尽" class="chip">尿不尽</button>
+            <button data-value="涩痛" class="chip">涩痛</button>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 4: 望闻切 ========== -->
-    <section id="section-look-listen-pulse" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-          <i data-lucide="scan-eye" class="w-5 h-5"></i>
+          <i data-lucide="stethoscope" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">望闻切</h2>
-          <p class="text-xs text-on-surface-variant">舌象、脉象、面色、神情</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">望闻切</h2>
+        <span class="text-xs text-on-surface-variant">·  舌象、脉象、面色、神情（中医四诊之望、闻、切）</span>
       </div>
-
-      <div class="space-y-5">
-        <!-- 舌象 -->
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- 舌色 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">舌象</label>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <div class="text-xs font-medium text-on-surface-variant mb-1.5">舌色 / 舌形</div>
-              <div class="flex flex-wrap gap-2" id="chip-tongue-color">
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">淡胖</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">淡红</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">淡白</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">红</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">绛</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">紫</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">暗</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">瘦薄</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">齿痕</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">裂纹</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">芒刺</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">嫩</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">老</button>
-              </div>
-            </div>
-            <div>
-              <div class="text-xs font-medium text-on-surface-variant mb-1.5">苔色 / 苔质</div>
-              <div class="flex flex-wrap gap-2" id="chip-tongue-coating">
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">白苔</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">黄苔</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">灰苔</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">黑苔</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">薄</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">厚</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">润</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">燥</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">腻</button>
-                <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">腐</button>
-              </div>
-            </div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">舌色</label>
+          <div id="tongue-color" class="flex flex-wrap gap-2">
+            <button data-value="淡红" class="chip">淡红</button>
+            <button data-value="淡白" class="chip is-active">淡白</button>
+            <button data-value="红" class="chip">红</button>
+            <button data-value="绛" class="chip">绛</button>
+            <button data-value="紫暗/瘀点" class="chip">紫暗/瘀点</button>
           </div>
         </div>
-
+        <!-- 舌形 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">舌形（多选）</label>
+          <div id="tongue-shape" class="flex flex-wrap gap-2">
+            <button data-value="胖大" class="chip is-active">胖大</button>
+            <button data-value="瘦薄" class="chip">瘦薄</button>
+            <button data-value="齿痕" class="chip is-active">齿痕</button>
+            <button data-value="裂纹" class="chip">裂纹</button>
+            <button data-value="芒刺" class="chip">芒刺</button>
+            <button data-value="嫩" class="chip">嫩</button>
+            <button data-value="老" class="chip">老</button>
+            <button data-value="歪斜" class="chip">歪斜</button>
+          </div>
+        </div>
+        <!-- 苔色 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">苔色</label>
+          <div id="tongue-coat-color" class="flex flex-wrap gap-2">
+            <button data-value="薄白" class="chip">薄白</button>
+            <button data-value="白" class="chip is-active">白</button>
+            <button data-value="薄黄" class="chip">薄黄</button>
+            <button data-value="黄腻" class="chip">黄腻</button>
+            <button data-value="灰" class="chip">灰</button>
+            <button data-value="黑" class="chip">黑</button>
+          </div>
+        </div>
+        <!-- 苔质 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">苔质</label>
+          <div id="tongue-coat-texture" class="flex flex-wrap gap-2">
+            <button data-value="厚腻" class="chip">厚腻</button>
+            <button data-value="腻" class="chip is-active">腻</button>
+            <button data-value="少苔" class="chip">少苔</button>
+            <button data-value="剥苔" class="chip">剥苔</button>
+            <button data-value="润" class="chip">润</button>
+            <button data-value="燥" class="chip">燥</button>
+            <button data-value="腐" class="chip">腐</button>
+          </div>
+        </div>
+        <!-- 舌下 -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">舌下（络脉）</label>
+          <input id="input-tongue-sub" type="text" value="络脉略粗张，颜色紫暗" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+        </div>
         <!-- 脉象 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">脉象</label>
-          <div class="flex flex-wrap gap-2" id="chip-pulse">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">浮</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">沉</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">迟</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">数</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">实</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">滑</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">涩</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">洪</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">细</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">弦</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">紧</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">缓</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">弱</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">濡</button>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-on-surface mb-1.5">脉象（多选）</label>
+          <div id="pulse" class="flex flex-wrap gap-2">
+            <button data-value="浮" class="chip">浮</button>
+            <button data-value="沉" class="chip is-active">沉</button>
+            <button data-value="迟" class="chip">迟</button>
+            <button data-value="数" class="chip">数</button>
+            <button data-value="滑" class="chip">滑</button>
+            <button data-value="涩" class="chip">涩</button>
+            <button data-value="弦" class="chip is-active">弦</button>
+            <button data-value="细" class="chip">细</button>
+            <button data-value="弱" class="chip">弱</button>
+            <button data-value="洪" class="chip">洪</button>
+            <button data-value="紧" class="chip">紧</button>
+            <button data-value="缓" class="chip">缓</button>
+            <button data-value="濡" class="chip">濡</button>
+            <input type="text" placeholder="其他描述…" class="bg-surface-container border-none rounded-full px-3 py-1 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-40"/>
           </div>
         </div>
-
         <!-- 面色 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">面色</label>
-          <div class="flex flex-wrap gap-2" id="chip-face-color">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">常色</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">红</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">白</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">黄</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">青</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">黑</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">晦暗</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">潮红</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">萎黄</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">面色</label>
+          <div id="face-color" class="flex flex-wrap gap-2">
+            <button data-value="常色" class="chip">常色</button>
+            <button data-value="红" class="chip">红</button>
+            <button data-value="白" class="chip">白</button>
+            <button data-value="黄" class="chip">黄</button>
+            <button data-value="青" class="chip">青</button>
+            <button data-value="黑" class="chip">黑</button>
+            <button data-value="晦暗" class="chip">晦暗</button>
+            <button data-value="潮红" class="chip">潮红</button>
+            <button data-value="萎黄" class="chip is-active">萎黄</button>
           </div>
         </div>
-
         <!-- 神情 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">神情</label>
-          <div class="flex flex-wrap gap-2" id="chip-spirit">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">得神</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">失神</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">假神</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">神疲</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">精神萎靡</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">烦躁</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">淡漠</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">神情</label>
+          <div id="spirit" class="flex flex-wrap gap-2">
+            <button data-value="得神" class="chip">得神</button>
+            <button data-value="失神" class="chip">失神</button>
+            <button data-value="假神" class="chip">假神</button>
+            <button data-value="神疲" class="chip is-active">神疲</button>
+            <button data-value="精神萎靡" class="chip">精神萎靡</button>
+            <button data-value="烦躁" class="chip">烦躁</button>
+            <button data-value="淡漠" class="chip">淡漠</button>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 5: 舌象/面相照片上传 ========== -->
-    <section id="section-photo-upload" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
           <i data-lucide="camera" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">舌象 / 面相照片</h2>
-          <p class="text-xs text-on-surface-variant">上传高清照片便于辨证参考和疗效对比</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">舌象 / 面相照片</h2>
+        <span class="text-xs text-on-surface-variant">·  上传本次就诊的舌、面照片，便于复诊对比</span>
       </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <!-- 舌象上传 -->
-        <div id="upload-tongue" class="border-2 border-dashed border-outline-variant/60 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary-container/20 transition-colors">
-          <div class="w-12 h-12 rounded-full bg-primary-container text-primary flex items-center justify-center mb-3">
-            <i data-lucide="camera" class="w-6 h-6"></i>
-          </div>
-          <div class="text-sm font-medium text-on-surface">点击上传舌象</div>
-          <div class="text-xs text-on-surface-variant mt-1">支持 JPG / PNG，建议自然光下拍摄</div>
-        </div>
-
-        <!-- 面相上传 -->
-        <div id="upload-face" class="border-2 border-dashed border-outline-variant/60 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary-container/20 transition-colors">
-          <div class="w-12 h-12 rounded-full bg-primary-container text-primary flex items-center justify-center mb-3">
-            <i data-lucide="camera" class="w-6 h-6"></i>
-          </div>
-          <div class="text-sm font-medium text-on-surface">点击上传面相</div>
-          <div class="text-xs text-on-surface-variant mt-1">支持 JPG / PNG，建议正脸自然光</div>
-        </div>
-      </div>
-
-      <!-- 历史照片对比 -->
-      <div class="mt-5">
-        <div class="flex items-center justify-between mb-2.5">
-          <div class="text-sm font-medium text-on-surface">最近 2 次舌象 / 面相对比</div>
-          <a href="patient-detail.html" id="link-view-history" class="text-xs text-primary hover:underline">查看完整记录 →</a>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
+      <div class="border-t border-outline-variant/30 pt-5 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 舌象上传 -->
           <div>
-            <div class="text-xs text-on-surface-variant mb-2">2025-10-10 · 上次就诊</div>
-            <div class="grid grid-cols-2 gap-2">
-              <div class="aspect-square rounded-lg overflow-hidden border border-outline-variant/30">
-                <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=240&h=240&fit=crop" alt="舌象历史照片" data-category="人物" class="w-full h-full object-cover" />
-              </div>
-              <div class="aspect-square rounded-lg overflow-hidden border border-outline-variant/30">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&h=240&fit=crop" alt="面相历史照片" data-category="人物" class="w-full h-full object-cover" />
-              </div>
+            <div id="upload-tongue" class="border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:bg-primary-container/10 transition-colors h-44">
+              <i data-lucide="camera" class="w-8 h-8 text-on-surface-variant mb-2"></i>
+              <div class="text-sm font-medium text-on-surface">点击上传舌象</div>
+              <div class="text-xs text-on-surface-variant mt-1">支持 JPG / PNG，最大 5MB</div>
+            </div>
+            <div class="text-xs text-on-surface-variant mt-2 flex items-center gap-1.5">
+              <i data-lucide="image" class="w-3.5 h-3.5"></i>
+              本次未上传
             </div>
           </div>
+          <!-- 面相上传 -->
           <div>
-            <div class="text-xs text-on-surface-variant mb-2">2025-09-26 · 上上次</div>
-            <div class="grid grid-cols-2 gap-2">
-              <div class="aspect-square rounded-lg overflow-hidden border border-outline-variant/30">
-                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=240&h=240&fit=crop" alt="舌象历史照片2" data-category="人物" class="w-full h-full object-cover" />
+            <div id="upload-face" class="border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:bg-primary-container/10 transition-colors h-44">
+              <i data-lucide="camera" class="w-8 h-8 text-on-surface-variant mb-2"></i>
+              <div class="text-sm font-medium text-on-surface">点击上传面相</div>
+              <div class="text-xs text-on-surface-variant mt-1">支持 JPG / PNG，最大 5MB</div>
+            </div>
+            <div class="text-xs text-on-surface-variant mt-2 flex items-center gap-1.5">
+              <i data-lucide="image" class="w-3.5 h-3.5"></i>
+              本次未上传
+            </div>
+          </div>
+        </div>
+        <!-- 历史照片对比 -->
+        <div class="mt-6">
+          <div class="text-sm font-medium text-on-surface mb-3">最近历史照片</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- 列表-历史照片-1 -->
+            <div class="bg-surface-container rounded-lg p-2">
+              <div class="aspect-square bg-surface-container-high rounded-md flex items-center justify-center overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=300&h=300&fit=crop" alt="舌象历史" data-category="其他" class="w-full h-full object-cover"/>
               </div>
-              <div class="aspect-square rounded-lg overflow-hidden border border-outline-variant/30">
-                <img src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=240&h=240&fit=crop" alt="面相历史照片2" data-category="人物" class="w-full h-full object-cover" />
+              <div class="text-xs text-on-surface mt-1.5 text-center">舌象 · 2025-10-10</div>
+            </div>
+            <!-- 列表-历史照片-2 -->
+            <div class="bg-surface-container rounded-lg p-2">
+              <div class="aspect-square bg-surface-container-high rounded-md flex items-center justify-center overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?w=300&h=300&fit=crop" alt="面相历史" data-category="人物" class="w-full h-full object-cover"/>
               </div>
+              <div class="text-xs text-on-surface mt-1.5 text-center">面相 · 2025-10-10</div>
+            </div>
+            <!-- 列表-历史照片-3 -->
+            <div class="bg-surface-container rounded-lg p-2 opacity-60">
+              <div class="aspect-square bg-surface-container-high rounded-md flex items-center justify-center overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=300&fit=crop" alt="舌象更早" data-category="其他" class="w-full h-full object-cover"/>
+              </div>
+              <div class="text-xs text-on-surface mt-1.5 text-center">舌象 · 2025-09-26</div>
+            </div>
+            <!-- 列表-历史照片-4 -->
+            <div class="bg-surface-container rounded-lg p-2 opacity-60">
+              <div class="aspect-square bg-surface-container-high rounded-md flex items-center justify-center overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1612531386530-97286d97c2d2?w=300&h=300&fit=crop" alt="面相更早" data-category="人物" class="w-full h-full object-cover"/>
+              </div>
+              <div class="text-xs text-on-surface mt-1.5 text-center">面相 · 2025-09-26</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== Section 6: 体质 & 辨证 ========== -->
-    <section id="section-constitution-syndrome" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <!-- ========== Section 6: 体质 & 辨证三要素 ========== -->
+    <section class="bg-surface shadow-card rounded-2xl p-6 ring-1 ring-primary/20">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-          <i data-lucide="leaf" class="w-5 h-5"></i>
+          <i data-lucide="clipboard-list" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">体质 & 辨证</h2>
-          <p class="text-xs text-on-surface-variant">中医体质分类、证型判定与治法</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">体质 & 辨证三要素</h2>
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-primary/10 text-primary ml-1">核心</span>
+        <span class="text-xs text-on-surface-variant">·  辨证论治的关键三要素：病位、病性、证型</span>
       </div>
-
-      <div class="space-y-5">
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-5">
         <!-- 体质分类 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">体质分类（可多选）</label>
-          <div class="flex flex-wrap gap-2" id="chip-constitution">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">平和质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">气虚质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阳虚质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阴虚质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">痰湿质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">湿热质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">血瘀质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">气郁质</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">特禀质</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">体质分类（多选）</label>
+          <div id="constitution" class="flex flex-wrap gap-2">
+            <button data-value="平和质" class="chip">平和质</button>
+            <button data-value="气虚质" class="chip is-active">气虚质</button>
+            <button data-value="阳虚质" class="chip">阳虚质</button>
+            <button data-value="阴虚质" class="chip">阴虚质</button>
+            <button data-value="痰湿质" class="chip is-active">痰湿质</button>
+            <button data-value="湿热质" class="chip">湿热质</button>
+            <button data-value="血瘀质" class="chip">血瘀质</button>
+            <button data-value="气郁质" class="chip">气郁质</button>
+            <button data-value="特禀质" class="chip">特禀质</button>
           </div>
         </div>
-
-        <!-- 辨证 -->
+        <!-- 病位 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">辨证（常用证型）</label>
-          <div class="flex flex-wrap gap-2" id="chip-syndrome">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">脾虚湿困</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">风寒袭肺</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">风热犯肺</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">痰湿蕴肺</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肝火犯肺</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肺阴亏虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">脾气虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">脾阳虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">心脾两虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肝郁脾虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肝阳上亢</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肝肾阴虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肾阳虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肾阴虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">心肾不交</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">气血两虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">气阴两虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">瘀血阻络</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">寒湿阻滞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">湿热下注</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">痰热内扰</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">痰瘀互结</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">风痰上扰</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阳虚水泛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阴虚火旺</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">心胆气虚</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胆郁痰扰</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胃热炽盛</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">食积停滞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">冲任不调</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">营卫不和</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">
+            病位 <span class="text-on-surface-variant font-normal">（多选 · 病在何处）</span>
+          </label>
+          <div class="space-y-2">
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">表里:</span>
+              <div id="loc-depth" class="inline-flex flex-wrap gap-2">
+                <button data-value="表" class="chip">表</button>
+                <button data-value="里" class="chip is-active">里</button>
+                <button data-value="半表半里" class="chip">半表半里</button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">脏腑:</span>
+              <div id="loc-zangfu" class="inline-flex flex-wrap gap-2">
+                <button data-value="心" class="chip">心</button>
+                <button data-value="肝" class="chip">肝</button>
+                <button data-value="脾" class="chip is-active">脾</button>
+                <button data-value="肺" class="chip">肺</button>
+                <button data-value="肾" class="chip">肾</button>
+                <button data-value="胆" class="chip">胆</button>
+                <button data-value="胃" class="chip">胃</button>
+                <button data-value="膀胱" class="chip">膀胱</button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">三焦:</span>
+              <div id="loc-sanjiao" class="inline-flex flex-wrap gap-2">
+                <button data-value="上焦" class="chip">上焦</button>
+                <button data-value="中焦" class="chip is-active">中焦</button>
+                <button data-value="下焦" class="chip">下焦</button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-on-surface-variant mr-2">经络:</span>
+              <input id="input-meridian" type="text" value="手太阴肺经、足太阴脾经" class="bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 w-80"/>
+            </div>
           </div>
         </div>
-
-        <!-- 治法 -->
+        <!-- 病性 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">治法</label>
-          <input id="input-treatment" type="text" value="健脾祛湿，化痰止咳"
-                 class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <label class="block text-sm font-medium text-on-surface mb-1.5">
+            病性 <span class="text-on-surface-variant font-normal">（多选 · 病属何性）</span>
+          </label>
+          <div id="nature" class="flex flex-wrap gap-2">
+            <button data-value="寒" class="chip">寒</button>
+            <button data-value="热" class="chip">热</button>
+            <button data-value="虚" class="chip is-active">虚</button>
+            <button data-value="实" class="chip">实</button>
+            <button data-value="气滞" class="chip">气滞</button>
+            <button data-value="血瘀" class="chip">血瘀</button>
+            <button data-value="痰湿" class="chip is-active">痰湿</button>
+            <button data-value="阴虚" class="chip">阴虚</button>
+            <button data-value="阳虚" class="chip">阳虚</button>
+            <button data-value="气血两虚" class="chip">气血两虚</button>
+          </div>
+        </div>
+        <!-- 辨证结论 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">辨证结论（证型）</label>
+          <div id="syndrome" class="flex flex-wrap gap-2">
+            <button data-value="脾虚湿困" class="chip is-active">脾虚湿困</button>
+            <button data-value="脾气虚" class="chip">脾气虚</button>
+            <button data-value="脾阳虚" class="chip">脾阳虚</button>
+            <button data-value="痰湿蕴肺" class="chip">痰湿蕴肺</button>
+            <button data-value="风寒袭肺" class="chip">风寒袭肺</button>
+            <button data-value="风热犯肺" class="chip">风热犯肺</button>
+            <button data-value="肝郁脾虚" class="chip">肝郁脾虚</button>
+            <button data-value="心脾两虚" class="chip">心脾两虚</button>
+            <button data-value="气阴两虚" class="chip">气阴两虚</button>
+            <button data-value="气血两虚" class="chip">气血两虚</button>
+            <button data-value="肾阳虚" class="chip">肾阳虚</button>
+            <button data-value="肾阴虚" class="chip">肾阴虚</button>
+            <button data-value="湿热内蕴" class="chip">湿热内蕴</button>
+            <button data-value="寒湿困脾" class="chip">寒湿困脾</button>
+            <button data-value="血瘀证" class="chip">血瘀证</button>
+            <button data-value="气滞证" class="chip">气滞证</button>
+            <button data-value="外感风寒" class="chip">外感风寒</button>
+            <input type="text" placeholder="+ 自定义证型" class="bg-surface-container border-none rounded-full px-3 py-1 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-48"/>
+          </div>
+        </div>
+        <!-- 治则治法 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">治则治法</label>
+          <div id="treatment" class="flex flex-wrap gap-2">
+            <button data-value="健脾祛湿，化痰止咳" class="chip is-active">健脾祛湿，化痰止咳</button>
+            <button data-value="疏肝健脾" class="chip">疏肝健脾</button>
+            <button data-value="解表散寒" class="chip">解表散寒</button>
+            <button data-value="清热利湿" class="chip">清热利湿</button>
+            <button data-value="补气养血" class="chip">补气养血</button>
+            <button data-value="化痰止咳" class="chip">化痰止咳</button>
+            <button data-value="活血化瘀" class="chip">活血化瘀</button>
+            <button data-value="温阳散寒" class="chip">温阳散寒</button>
+            <button data-value="滋阴清热" class="chip">滋阴清热</button>
+            <button data-value="补益脾肺" class="chip">补益脾肺</button>
+            <button data-value="燥湿化痰" class="chip">燥湿化痰</button>
+            <button data-value="理气和胃" class="chip">理气和胃</button>
+            <button data-value="宁心安神" class="chip">宁心安神</button>
+            <button data-value="平肝潜阳" class="chip">平肝潜阳</button>
+            <button data-value="滋补肝肾" class="chip">滋补肝肾</button>
+            <button data-value="温肾健脾" class="chip">温肾健脾</button>
+            <button data-value="益气固表" class="chip">益气固表</button>
+            <button data-value="通络止痛" class="chip">通络止痛</button>
+            <input type="text" placeholder="+ 自定义治法" class="bg-surface-container border-none rounded-full px-3 py-1 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-48"/>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 7: 中药处方（结构化） ========== -->
-    <section id="section-herbal-prescription" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-            <i data-lucide="pill" class="w-5 h-5"></i>
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
+        <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
+          <i data-lucide="pill" class="w-5 h-5"></i>
+        </div>
+        <h2 class="text-base font-semibold text-on-surface">中药处方</h2>
+        <span class="text-xs text-on-surface-variant">·  结构化方剂录入（支持药名补全、特殊煎法）</span>
+      </div>
+      <div class="border-t border-outline-variant/30 pt-5 mt-4">
+        <!-- 工具栏 -->
+        <div class="flex flex-wrap items-end gap-4 mb-4">
+          <div>
+            <label class="block text-xs text-on-surface-variant mb-1">剂数</label>
+            <div class="flex items-center gap-2">
+              <input id="rx-doses" type="number" min="1" value="7" class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+              <span class="text-sm text-on-surface-variant">剂</span>
+            </div>
           </div>
           <div>
-            <h2 class="text-base font-semibold text-on-surface">中药处方</h2>
-            <p class="text-xs text-on-surface-variant">结构化录入：药名、剂量、特殊煎法</p>
+            <label class="block text-xs text-on-surface-variant mb-1">服法</label>
+            <div id="rx-method" class="flex gap-2">
+              <button data-value="水煎服" class="chip is-active">水煎服</button>
+              <button data-value="丸剂" class="chip">丸剂</button>
+              <button data-value="膏方" class="chip">膏方</button>
+              <button data-value="冲服" class="chip">冲服</button>
+              <button data-value="外用" class="chip">外用</button>
+            </div>
+          </div>
+          <div class="ml-auto text-sm text-on-surface-variant flex items-center gap-3">
+            <span class="inline-flex items-center gap-1"><i data-lucide="leaf" class="w-3.5 h-3.5 text-primary"></i>药味数: <strong id="rx-count" class="text-on-surface">12</strong> 味</span>
+            <span class="text-outline-variant">|</span>
+            <span>总剂量: <strong id="rx-total" class="text-on-surface">287</strong> g</span>
           </div>
         </div>
+        <!-- 处方表格 -->
+        <div class="rounded-lg overflow-hidden border border-outline-variant/30">
+          <div class="grid grid-cols-12 px-4 py-2.5 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+            <div class="col-span-1">序号</div>
+            <div class="col-span-5">药名</div>
+            <div class="col-span-2">剂量 (g)</div>
+            <div class="col-span-3">特殊煎法</div>
+            <div class="col-span-1 text-right">操作</div>
+          </div>
+          <div id="rx-table">
+            <!-- 列表-药材-1 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">1</div>
+              <div class="col-span-5 font-medium text-on-surface">党参</div>
+              <div class="col-span-2 text-on-surface">15</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-2 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">2</div>
+              <div class="col-span-5 font-medium text-on-surface">白术</div>
+              <div class="col-span-2 text-on-surface">12</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-3 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">3</div>
+              <div class="col-span-5 font-medium text-on-surface">茯苓</div>
+              <div class="col-span-2 text-on-surface">15</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-4 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">4</div>
+              <div class="col-span-5 font-medium text-on-surface">炙甘草</div>
+              <div class="col-span-2 text-on-surface">6</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-5 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">5</div>
+              <div class="col-span-5 font-medium text-on-surface">陈皮</div>
+              <div class="col-span-2 text-on-surface">9</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-6 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">6</div>
+              <div class="col-span-5 font-medium text-on-surface">半夏</div>
+              <div class="col-span-2 text-on-surface">9</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-7 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">7</div>
+              <div class="col-span-5 font-medium text-on-surface">杏仁</div>
+              <div class="col-span-2 text-on-surface">9</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-8 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">8</div>
+              <div class="col-span-5 font-medium text-on-surface">浙贝母</div>
+              <div class="col-span-2 text-on-surface">12</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-9 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">9</div>
+              <div class="col-span-5 font-medium text-on-surface">紫菀</div>
+              <div class="col-span-2 text-on-surface">12</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-10 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">10</div>
+              <div class="col-span-5 font-medium text-on-surface">款冬花</div>
+              <div class="col-span-2 text-on-surface">12</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-11 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">11</div>
+              <div class="col-span-5 font-medium text-on-surface">枇杷叶 <span class="text-xs text-primary">(包煎)</span></div>
+              <div class="col-span-2 text-on-surface">9</div>
+              <div class="col-span-3"><span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning">包煎</span></div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+            <!-- 列表-药材-12 -->
+            <div class="grid grid-cols-12 px-4 py-2.5 items-center odd:bg-surface-container/30 even:bg-surface text-sm">
+              <div class="col-span-1 text-on-surface-variant">12</div>
+              <div class="col-span-5 font-medium text-on-surface">生姜 <span class="text-xs text-primary">(3 片)</span></div>
+              <div class="col-span-2 text-on-surface">9</div>
+              <div class="col-span-3 text-on-surface-variant">普通</div>
+              <div class="col-span-1 text-right"><button class="rx-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div>
+            </div>
+          </div>
+        </div>
+        <button id="btn-add-herb" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+          <i data-lucide="plus" class="w-4 h-4"></i>添加药材
+        </button>
       </div>
-
-      <!-- 工具栏 -->
-      <div class="flex items-center gap-4 mb-4 p-3 bg-surface-container/50 rounded-lg">
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-medium text-on-surface-variant">剂数</label>
-          <input id="input-dose-count" type="number" value="7" min="1" max="30"
-                 class="w-16 bg-surface-container border-none rounded-md px-2 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          <span class="text-xs text-on-surface-variant">剂</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-medium text-on-surface-variant">服法</label>
-          <select id="select-method"
-                  class="bg-surface-container border-none rounded-md px-2 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
-            <option value="水煎服" selected>水煎服</option>
-            <option value="丸剂">丸剂</option>
-            <option value="膏方">膏方</option>
-            <option value="冲服">冲服</option>
-            <option value="外用">外用</option>
-          </select>
-        </div>
-        <div class="flex-1"></div>
-        <div class="flex items-center gap-4 text-xs">
-          <div><span class="text-on-surface-variant">药味数：</span><span id="stat-herb-count" class="font-semibold text-on-surface">12 味</span></div>
-          <div><span class="text-on-surface-variant">总剂量：</span><span id="stat-total-dose" class="font-semibold text-primary">287g</span></div>
-        </div>
-      </div>
-
-      <!-- 处方表格 -->
-      <div id="prescription-table" class="rounded-lg border border-outline-variant/30 overflow-hidden">
-        <div class="grid grid-cols-12 bg-surface-container px-4 py-2.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-          <div class="col-span-1">序号</div>
-          <div class="col-span-5">药名</div>
-          <div class="col-span-2">剂量</div>
-          <div class="col-span-3">特殊煎法</div>
-          <div class="col-span-1 text-center">操作</div>
-        </div>
-
-        <!-- 表格行 1-12：预填示例 -->
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">1</div>
-          <div class="col-span-5"><input type="text" value="党参" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="15" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">2</div>
-          <div class="col-span-5"><input type="text" value="白术" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="12" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">3</div>
-          <div class="col-span-5"><input type="text" value="茯苓" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="15" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">4</div>
-          <div class="col-span-5"><input type="text" value="炙甘草" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="6" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">5</div>
-          <div class="col-span-5"><input type="text" value="陈皮" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="9" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">6</div>
-          <div class="col-span-5"><input type="text" value="半夏" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="9" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">7</div>
-          <div class="col-span-5"><input type="text" value="杏仁" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="9" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">8</div>
-          <div class="col-span-5"><input type="text" value="浙贝母" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="12" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">9</div>
-          <div class="col-span-5"><input type="text" value="紫菀" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="12" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">10</div>
-          <div class="col-span-5"><input type="text" value="款冬花" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="12" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 bg-surface-container/30 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">11</div>
-          <div class="col-span-5"><input type="text" value="枇杷叶" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="9" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">g</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option selected>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-
-        <div class="grid grid-cols-12 items-center px-4 py-2.5 border-t border-outline-variant/20">
-          <div class="col-span-1 text-sm text-on-surface-variant">12</div>
-          <div class="col-span-5"><input type="text" value="生姜" class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /></div>
-          <div class="col-span-2 flex items-center gap-1"><input type="number" value="3" class="w-14 bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded" /><span class="text-xs text-on-surface-variant">片</span></div>
-          <div class="col-span-3"><select class="w-full bg-transparent border-none text-sm text-on-surface px-1 py-1 focus:outline-none focus:bg-surface-container rounded"><option>普通</option><option>先煎</option><option>后下</option><option>包煎</option><option>另煎</option><option>烊化</option><option>冲服</option></select></div>
-          <div class="col-span-1 text-center"><button class="btn-delete-row text-on-surface-variant hover:text-error p-1 rounded transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-        </div>
-      </div>
-
-      <!-- 添加药材 -->
-      <button id="btn-add-herb" class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-        <i data-lucide="plus" class="w-4 h-4"></i>添加药材
-      </button>
     </section>
 
     <!-- ========== Section 8: 针灸处方 ========== -->
-    <section id="section-acupuncture" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-            <i data-lucide="syringe" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h2 class="text-base font-semibold text-on-surface">针灸处方</h2>
-            <p class="text-xs text-on-surface-variant">主穴、配穴、补泻手法与留针</p>
-          </div>
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
+        <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
+          <i data-lucide="syringe" class="w-5 h-5"></i>
         </div>
-        <button id="btn-toggle-acupuncture" class="text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors">
-          <i data-lucide="chevron-down" class="w-5 h-5"></i>
-        </button>
+        <h2 class="text-base font-semibold text-on-surface">针灸处方</h2>
+        <span class="text-xs text-on-surface-variant">·  主穴、配穴、补泻手法与留针时间</span>
       </div>
-
-      <div id="acupuncture-body" class="space-y-5">
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-5">
         <!-- 主穴 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">主穴</label>
-          <div class="flex flex-wrap gap-2 mb-2" id="chip-main-points">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">足三里</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">三阴交</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">丰隆</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">中脘</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">合谷</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">曲池</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">太冲</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">内关</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">外关</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阳陵泉</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">阴陵泉</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">主穴（多选）</label>
+          <div id="acu-main" class="flex flex-wrap gap-2">
+            <button data-value="百会" class="chip">百会</button>
+            <button data-value="合谷" class="chip">合谷</button>
+            <button data-value="足三里" class="chip is-active">足三里</button>
+            <button data-value="三阴交" class="chip is-active">三阴交</button>
+            <button data-value="太冲" class="chip">太冲</button>
+            <button data-value="内关" class="chip">内关</button>
+            <button data-value="神门" class="chip">神门</button>
+            <button data-value="中脘" class="chip is-active">中脘</button>
+            <button data-value="关元" class="chip">关元</button>
+            <button data-value="气海" class="chip">气海</button>
+            <button data-value="命门" class="chip">命门</button>
+            <button data-value="肾俞" class="chip">肾俞</button>
+            <button data-value="脾俞" class="chip">脾俞</button>
+            <button data-value="胃俞" class="chip">胃俞</button>
+            <button data-value="肺俞" class="chip">肺俞</button>
+            <button data-value="丰隆" class="chip is-active">丰隆</button>
+            <input type="text" placeholder="+ 自定义" class="bg-surface-container border-none rounded-full px-3 py-1 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-32"/>
           </div>
-          <input id="input-main-points-custom" type="text" placeholder="+ 自定义穴位"
-                 class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
         </div>
-
         <!-- 配穴 -->
         <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">配穴</label>
-          <div class="flex flex-wrap gap-2" id="chip-aux-points">
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">肺俞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-on-primary" data-selected="true">脾俞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">胃俞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">肾俞</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">天突</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">膻中</button>
-            <button type="button" class="chip px-3 py-1.5 text-xs font-medium rounded-md bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-selected="false">大椎</button>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">配穴（多选）</label>
+          <div id="acu-assist" class="flex flex-wrap gap-2">
+            <button data-value="肺俞" class="chip is-active">肺俞</button>
+            <button data-value="脾俞" class="chip is-active">脾俞</button>
+            <button data-value="胃俞" class="chip">胃俞</button>
+            <button data-value="心俞" class="chip">心俞</button>
+            <input type="text" placeholder="+ 自定义" class="bg-surface-container border-none rounded-full px-3 py-1 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 w-32"/>
           </div>
         </div>
-
-        <!-- 补泻手法 -->
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-2">补泻手法</label>
-          <div class="flex gap-2">
-            <label class="flex items-center gap-2 px-3 py-2 rounded-md bg-primary text-on-primary cursor-pointer">
-              <input type="radio" name="acupuncture-technique" value="补法" checked class="text-primary focus:ring-primary/30" />
-              <span class="text-sm font-medium">补法</span>
-            </label>
-            <label class="flex items-center gap-2 px-3 py-2 rounded-md bg-surface-container cursor-pointer">
-              <input type="radio" name="acupuncture-technique" value="泻法" class="text-primary focus:ring-primary/30" />
-              <span class="text-sm text-on-surface">泻法</span>
-            </label>
-            <label class="flex items-center gap-2 px-3 py-2 rounded-md bg-surface-container cursor-pointer">
-              <input type="radio" name="acupuncture-technique" value="平补平泻" class="text-primary focus:ring-primary/30" />
-              <span class="text-sm text-on-surface">平补平泻</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- 留针 + 疗程 -->
-        <div class="grid grid-cols-2 gap-5">
+        <!-- 补泻手法 + 留针时间 + 疗程 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
-            <label class="block text-sm font-medium text-on-surface mb-2">留针时间</label>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">补泻手法</label>
+            <div id="acu-method" class="flex gap-2">
+              <button data-value="补法" class="chip is-active">补法</button>
+              <button data-value="泻法" class="chip">泻法</button>
+              <button data-value="平补平泻" class="chip">平补平泻</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">留针时间</label>
             <div class="flex items-center gap-2">
-              <input id="input-needle-duration" type="number" value="30" min="5" max="60"
-                     class="w-24 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <input id="acu-duration" type="number" value="30" class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
               <span class="text-sm text-on-surface-variant">分钟</span>
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-on-surface mb-2">疗程</label>
-            <input id="input-treatment-course" type="text" value="每日 1 次，10 次 1 疗程"
-                   class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <label class="block text-sm font-medium text-on-surface mb-1.5">疗程</label>
+            <input id="acu-course" type="text" value="每日 1 次，10 次 1 疗程" class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ========== Section 9: 中医外治记录 ========== -->
-    <section id="section-external-therapy" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
           <i data-lucide="heart-pulse" class="w-5 h-5"></i>
         </div>
-        <div>
-          <h2 class="text-base font-semibold text-on-surface">中医外治记录</h2>
-          <p class="text-xs text-on-surface-variant">针刺、艾灸、推拿、拔罐、刮痧等外治项目</p>
-        </div>
+        <h2 class="text-base font-semibold text-on-surface">中医外治记录</h2>
+        <span class="text-xs text-on-surface-variant">·  艾灸、推拿、拔罐、刮痧等外治手法</span>
       </div>
-
-      <div class="space-y-4" id="external-therapy-list">
-        <!-- 外治记录 1：艾灸 -->
-        <div class="rounded-xl border border-outline-variant/30 p-4 bg-surface-container/30">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-sm font-semibold text-on-surface">外治 #1 · 艾灸</div>
-            <button class="btn-delete-therapy text-on-surface-variant hover:text-error p-1 rounded transition-colors">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-4">
+        <!-- 列表-外治-1：艾灸 -->
+        <div class="border border-outline-variant/30 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-semibold text-on-surface">外治 #1 · 艾灸</span>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-primary/10 text-primary">主要项目</span>
+            </div>
+            <button class="ext-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">项目</label>
-              <div class="flex flex-wrap gap-1.5" id="chip-therapy-1-item">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">艾灸</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">针刺</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">电针</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">温针</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">拔罐</button>
+              <span class="block text-xs text-on-surface-variant mb-1">项目</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="艾灸" class="chip is-active">艾灸</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">部位</label>
-              <div class="flex flex-wrap gap-1.5" id="chip-therapy-1-area">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">头面</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">颈肩</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">腰背</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">胸腹</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">四肢</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">局部</button>
+              <span class="block text-xs text-on-surface-variant mb-1">部位</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="腰背" class="chip is-active">腰背</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">取穴</label>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">足三里</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">肺俞</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">大椎</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">天突</button>
+              <span class="block text-xs text-on-surface-variant mb-1">取穴</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="足三里" class="chip is-active">足三里</button>
+                <button data-value="肺俞" class="chip is-active">肺俞</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">手法</label>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">补</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">泻</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">平补平泻</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">温针</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">闪罐</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">走罐</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">留罐</button>
+              <span class="block text-xs text-on-surface-variant mb-1">手法</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="灸法" class="chip is-active">灸法</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">时长（分钟）</label>
-              <input type="number" value="20"
-                     class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <span class="block text-xs text-on-surface-variant mb-1">时长</span>
+              <div class="flex items-center gap-2">
+                <input type="number" value="20" class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+                <span class="text-sm text-on-surface-variant">分钟</span>
+              </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">患者反应</label>
-              <input type="text" value="得气感明显，皮肤微红"
-                     class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <span class="block text-xs text-on-surface-variant mb-1">患者反应</span>
+              <input type="text" value="得气感明显，皮肤微红" class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
             </div>
           </div>
         </div>
-
-        <!-- 外治记录 2：推拿 -->
-        <div class="rounded-xl border border-outline-variant/30 p-4 bg-surface-container/30">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-sm font-semibold text-on-surface">外治 #2 · 推拿</div>
-            <button class="btn-delete-therapy text-on-surface-variant hover:text-error p-1 rounded transition-colors">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+        <!-- 列表-外治-2：推拿 -->
+        <div class="border border-outline-variant/30 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-semibold text-on-surface">外治 #2 · 推拿</span>
+            </div>
+            <button class="ext-del text-on-surface-variant hover:text-error"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">项目</label>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">推拿</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">按摩</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">捏脊</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">刮痧</button>
+              <span class="block text-xs text-on-surface-variant mb-1">项目</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="推拿" class="chip is-active">推拿</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">部位</label>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">头面</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">颈肩</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">腰背</button>
+              <span class="block text-xs text-on-surface-variant mb-1">部位</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="腰背" class="chip is-active">腰背</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">手法</label>
-              <div class="flex flex-wrap gap-1.5">
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">推</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-primary text-on-primary" data-selected="true">拿</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">按</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">揉</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">摩</button>
-                <button type="button" class="chip px-2.5 py-1 text-xs rounded-md bg-surface-container text-on-surface-variant" data-selected="false">擦</button>
+              <span class="block text-xs text-on-surface-variant mb-1">取穴</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="足三里" class="chip is-active">足三里</button>
+                <button data-value="肺俞" class="chip is-active">肺俞</button>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">时长（分钟）</label>
-              <input type="number" value="15"
-                     class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <span class="block text-xs text-on-surface-variant mb-1">手法</span>
+              <div class="flex flex-wrap gap-2">
+                <button data-value="按法" class="chip is-active">按法</button>
+                <button data-value="揉法" class="chip">揉法</button>
+              </div>
             </div>
-            <div class="col-span-2">
-              <label class="block text-xs font-medium text-on-surface-variant mb-1.5">患者反应</label>
-              <input type="text" value="颈肩部僵硬感明显缓解，自觉轻松"
-                     class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">时长</span>
+              <div class="flex items-center gap-2">
+                <input type="number" value="15" class="w-20 bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
+                <span class="text-sm text-on-surface-variant">分钟</span>
+              </div>
+            </div>
+            <div>
+              <span class="block text-xs text-on-surface-variant mb-1">患者反应</span>
+              <input type="text" value="肌肉放松，腰背温热" class="w-full bg-surface-container border-none rounded-md px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"/>
             </div>
           </div>
         </div>
+        <button id="btn-add-ext" class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+          <i data-lucide="plus" class="w-4 h-4"></i>添加外治记录
+        </button>
       </div>
-
-      <button id="btn-add-therapy" class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-        <i data-lucide="plus" class="w-4 h-4"></i>添加外治记录
-      </button>
     </section>
 
-    <!-- ========== Section 10: 医嘱 ========== -->
-    <section id="section-advice" class="bg-surface rounded-2xl shadow-card p-6">
-      <div class="flex items-center gap-2.5 mb-5">
+    <!-- ========== Section 10: 病例摘要与医嘱 ========== -->
+    <section class="bg-surface shadow-card rounded-2xl p-6">
+      <div class="flex items-center gap-2.5 mb-1">
         <div class="w-9 h-9 rounded-lg bg-primary-container text-primary flex items-center justify-center">
-          <i data-lucide="message-square" class="w-5 h-5"></i>
+          <i data-lucide="file-check" class="w-5 h-5"></i>
+        </div>
+        <h2 class="text-base font-semibold text-on-surface">病例摘要与医嘱</h2>
+        <span class="text-xs text-on-surface-variant">·  病历小结、患者医嘱与健康宣教</span>
+      </div>
+      <div class="border-t border-outline-variant/30 pt-5 mt-4 space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">病例摘要</label>
+          <textarea id="input-summary" rows="6" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none">患者王秀英，女，65 岁，退休教师。本次因"咳嗽反复两周，痰白稀"复诊。近一周咳嗽减轻，痰量减少，仍有胸闷，夜间入睡困难，夜尿 2 次，大便不成形。面色萎黄，神疲，舌淡胖有齿痕、苔白腻，脉沉弦。辨证为脾虚湿困，治宜健脾祛湿、化痰止咳。</textarea>
+          <div class="mt-1.5 text-xs text-on-surface-variant text-right"><span id="summary-count">0</span> / 500 字</div>
         </div>
         <div>
-          <h2 class="text-base font-semibold text-on-surface">医嘱</h2>
-          <p class="text-xs text-on-surface-variant">生活、饮食、用药注意事项</p>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">医嘱</label>
+          <textarea id="input-advice" rows="4" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none">忌食生冷油腻；注意保暖，避免受凉；按时服药；两周后复诊。</textarea>
         </div>
       </div>
+    </section>
 
-      <textarea id="input-advice" rows="4"
-                class="w-full bg-surface-container border-none rounded-md px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                placeholder="如：忌食生冷油腻，注意保暖，避免受凉；按时服药">忌食生冷油腻，注意保暖，避免受凉；按时服药，每日 1 剂分早晚 2 次温服；避风寒，慎起居，调情志；1 周后复诊，不适随诊。</textarea>
+    <!-- ========== Section 11: AI 辨证参考（DeepSeek） ========== -->
+    <section class="bg-gradient-to-r from-primary-container/40 to-primary/5 shadow-card rounded-2xl p-6 ring-1 ring-primary/30">
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-on-primary flex items-center justify-center shadow-card">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-on-surface flex items-center gap-1.5">
+              AI 智能辨证参考
+              <span class="text-base">🤖</span>
+            </h2>
+            <div class="text-xs text-on-surface-variant">基于本病历的主诉、病史、十问、舌脉等信息，AI 将自动生成：辨证分析 → 治法治则 → 参考药方 → 参考针灸/推拿穴位方</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface border border-primary/30 text-xs font-medium text-primary">
+          <i data-lucide="cpu" class="w-3.5 h-3.5"></i>DeepSeek-V3
+        </div>
+      </div>
+      <div class="border-t border-primary/20 pt-5 mt-4">
+        <!-- 触发按钮 -->
+        <div class="flex items-center justify-between bg-surface rounded-xl p-4 ring-1 ring-primary/20">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-on-surface">让 AI 帮您整理辨证思路</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">约需 5-10 秒 · 仅作参考，最终以您的判断为准</div>
+            </div>
+          </div>
+          <button id="btn-ai-generate" class="px-4 py-2 text-sm font-medium bg-primary text-on-primary hover:opacity-90 rounded-md inline-flex items-center gap-1.5 transition-all active:scale-[0.98]">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>一键生成 AI 辨证建议
+          </button>
+        </div>
+        <!-- AI 输出区 -->
+        <div id="ai-output" class="mt-4 bg-surface rounded-xl p-6 ring-1 ring-primary/20 min-h-[160px] flex flex-col items-center justify-center text-center">
+          <i data-lucide="mouse-pointer-click" class="w-8 h-8 text-primary/40 mb-2"></i>
+          <div class="text-sm text-on-surface-variant">👆 点击上方按钮生成 AI 辨证参考</div>
+        </div>
+        <!-- 操作按钮（生成后显示） -->
+        <div id="ai-actions" class="hidden mt-3 flex flex-wrap gap-2 justify-end">
+          <button id="btn-ai-apply-rx" class="px-3 py-1.5 text-sm font-medium bg-primary text-on-primary hover:opacity-90 rounded-md inline-flex items-center gap-1.5 transition-colors">
+            <i data-lucide="pill" class="w-3.5 h-3.5"></i>采纳建议到处方
+          </button>
+          <button id="btn-ai-copy-advice" class="px-3 py-1.5 text-sm font-medium bg-surface text-on-surface border border-outline-variant/40 hover:bg-surface-container rounded-md inline-flex items-center gap-1.5 transition-colors">
+            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>复制到医嘱
+          </button>
+        </div>
+        <!-- 红色警示框 -->
+        <div class="mt-4 bg-error/10 border-l-4 border-error rounded-r-md p-3 flex items-start gap-2.5">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-error mt-0.5 shrink-0"></i>
+          <div class="text-sm text-error leading-relaxed">
+            <strong>【提示】</strong>本内容由 AI 生成，仅作为文书整理参考，具体诊断和治疗请遵从执业医师的指导。
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -1071,134 +1261,245 @@
 
   <script>
     $(function () {
-      // ── chip 切换：单选 / 多选 自动判断 ─────────────────────────────
-      // 通过容器内 chip 数量判断：数量 <=2 视为单选（互斥），>2 视为多选
-      // 实际项目中由 PRD 决定，这里简单按容器判定
-      $('body').on('click', '.chip', function () {
-        const $chip = $(this);
-        const $container = $chip.parent();
-        const chips = $container.children('.chip');
-        const isSingle = chips.length <= 2; // 复诊来源、舌象拍照等少量选项视为单选
-
-        if (isSingle) {
-          // 单选模式：取消同组其他选中
-          chips.removeClass('bg-primary text-on-primary').addClass('bg-surface-container text-on-surface-variant').attr('data-selected', 'false');
-          $chip.removeClass('bg-surface-container text-on-surface-variant').addClass('bg-primary text-on-primary').attr('data-selected', 'true');
-        } else {
-          // 多选模式：切换当前状态
-          if ($chip.attr('data-selected') === 'true') {
-            $chip.removeClass('bg-primary text-on-primary').addClass('bg-surface-container text-on-surface-variant').attr('data-selected', 'false');
-          } else {
-            $chip.removeClass('bg-surface-container text-on-surface-variant').addClass('bg-primary text-on-primary').attr('data-selected', 'true');
-          }
-        }
+      // ======== Chip 切换（单选 / 多选） ========
+      // 通用 chip 点击切换。每个 chip-group 默认是"单选"
+      // 若需要在同一组内多选，在该容器上添加 data-multi
+      $('[id]').each(function () {
+        var $group = $(this);
+        // 找到 .chip 直接子元素且其 id 是 xxx 形式 - 这里通过 onclick 委托
       });
-
-      // ── 处方表格：删除行 ─────────────────────────────
-      // 后续应实现：
-      // 1. 删除当前行
-      // 2. 重新计算所有行的序号
-      // 3. 重新计算"药味数"和"总剂量"统计
-      $('#prescription-table').on('click', '.btn-delete-row', function () {
-        const $row = $(this).closest('.grid');
-        const $table = $('#prescription-table');
-        if ($table.find('.btn-delete-row').length <= 1) {
-          alert('处方至少保留 1 行');
+      // 使用事件委托：所有 chip 点击
+      $(document).on('click', '.chip', function (e) {
+        var $chip = $(this);
+        var $group = $chip.parent();
+        // 月经/小儿等不适用的 chip 阻止
+        if ($chip.is(':disabled') || $chip.prop('disabled')) {
+          e.preventDefault();
           return;
         }
-        $row.fadeOut(200, function () {
-          $row.remove();
-          // 重新编号
-          $table.find('.grid').each(function (idx) {
-            if (idx === 0) return; // 跳过表头
-            $(this).children().first().text(idx);
-          });
-        });
-      });
-
-      // ── 添加药材：点击后应在表格底部插入新行 ─────────────────────────────
-      // 后续应实现：
-      // 1. 在表格最后一行后插入新行
-      // 2. 序号自动 +1
-      // 3. 药名输入框获得焦点，支持自动补全（从药库匹配）
-      // 4. 默认剂量 9g，默认煎法"普通"
-      // 5. 更新"药味数"和"总剂量"统计
-      $('#btn-add-herb').on('click', function () {
-        console.log('添加药材：插入新行 + 自动补全 + 统计更新');
-      });
-
-      // ── 删除外治记录卡片 ─────────────────────────────
-      // 后续应实现：删除当前卡片，重新编号 #1/#2/#3 ...
-      $('#external-therapy-list').on('click', '.btn-delete-therapy', function () {
-        if (!confirm('确认删除该外治记录？')) return;
-        const $card = $(this).closest('.rounded-xl');
-        $card.fadeOut(200, function () {
-          $card.remove();
-          $('#external-therapy-list > div').each(function (idx) {
-            const title = $(this).find('.text-sm.font-semibold').first();
-            title.text(title.text().replace(/#\d+/, '#' + (idx + 1)));
-          });
-        });
-      });
-
-      // ── 添加外治记录 ─────────────────────────────
-      // 后续应实现：
-      // 1. 在列表底部插入一张空白的外治记录卡片
-      // 2. 卡片包含完整字段：项目 chip、部位 chip、取穴 chip、手法 chip、时长、患者反应
-      // 3. 重新编号
-      $('#btn-add-therapy').on('click', function () {
-        console.log('添加外治记录：插入新卡片 + 完整字段');
-      });
-
-      // ── 针灸处方折叠切换 ─────────────────────────────
-      $('#btn-toggle-acupuncture').on('click', function () {
-        $('#acupuncture-body').slideToggle(200);
-        const $icon = $(this).find('i');
-        $icon.toggleClass('rotate-180');
-      });
-
-      // ── 处方统计：监听剂数/剂量变化自动更新"药味数"和"总剂量" ─────────────
-      // 后续应实现：
-      // 1. 监听 #prescription-table 内的 input 变化
-      // 2. 实时累加所有行的剂量数字（仅数值型，忽略"片"、"枚"等单位）
-      // 3. 显示在 #stat-total-dose 中
-      $('#input-dose-count').on('input', function () {
-        console.log('剂数变化：', $(this).val());
-      });
-
-      // ── 上传舌象 / 面相 ─────────────────────────────
-      // 后续应实现：
-      // 1. 弹出文件选择器，仅接受 image/jpeg、image/png
-      // 2. 上传成功后，将缩略图插入对应上传框内
-      // 3. 支持多张，可删除
-      // 4. 调用第三方接口压缩图片
-      $('#upload-tongue, #upload-face').on('click', function () {
-        console.log('需要调用第三方接口实现图片上传：', $(this).attr('id'));
-      });
-
-      // ── 顶部导航：返回 / 保存草稿 / 完成并保存 ─────────────────────────────
-      $('#btn-back').on('click', function (e) {
-        // 默认 a 标签跳转行为即可（href="patient-detail.html"）
-        console.log('返回患者详情');
-      });
-
-      $('#btn-save-draft').on('click', function () {
-        // 后续应实现：
-        // 1. 收集整个表单数据（主诉、病史、所有 chip 选中状态、中药处方等）
-        // 2. 调保存草稿接口，标记 status = draft
-        // 3. 成功后 toast 提示，停留在当前页
-        alert('草稿已保存（原型演示）');
-      });
-
-      $('#btn-submit-record').on('click', function () {
-        // 后续应实现：
-        // 1. 完整表单校验（必填项：主诉、辨证、中药处方至少 1 行）
-        // 2. 收集所有数据，提交后端
-        // 3. 成功后跳转至 patient-detail.html
-        if (confirm('确认完成并保存该病历？')) {
-          window.location.href = 'patient-detail.html';
+        // 是否多选：通过 group 上是否有 data-multi
+        if ($group.data('multi')) {
+          $chip.toggleClass('is-active');
+        } else {
+          $group.find('.chip').removeClass('is-active');
+          $chip.addClass('is-active');
         }
       });
+
+      // ======== BMI 自动计算 ========
+      function calcBMI() {
+        var h = parseFloat($('#input-height').val());
+        var w = parseFloat($('#input-weight').val());
+        if (!h || !w) {
+          $('#bmi-value').text('—');
+          $('#bmi-tag').removeClass().addClass('inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container text-on-surface-variant').text('—');
+          return;
+        }
+        var m = h / 100;
+        var bmi = w / (m * m);
+        $('#bmi-value').text(bmi.toFixed(1));
+        var tag, cls;
+        if (bmi < 18.5)      { tag = '偏瘦'; cls = 'bg-warning/15 text-warning'; }
+        else if (bmi < 24)   { tag = '正常'; cls = 'bg-success/15 text-success'; }
+        else if (bmi < 28)   { tag = '超重'; cls = 'bg-warning/15 text-warning'; }
+        else                 { tag = '肥胖'; cls = 'bg-error/15 text-error'; }
+        $('#bmi-tag').removeClass().addClass('inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ' + cls).text(tag);
+      }
+      $('#input-height, #input-weight').on('input', calcBMI);
+      calcBMI();
+
+      // ======== 病例摘要字数统计 ========
+      function updateSummaryCount() {
+        var len = ($('#input-summary').val() || '').length;
+        $('#summary-count').text(len);
+      }
+      $('#input-summary').on('input', updateSummaryCount);
+      updateSummaryCount();
+
+      // ======== 顶部 header 操作 ========
+      $('#btn-back-to-patient').on('click', function (e) {
+        // 已经在 href 中指定 patient-detail.html，无需阻止默认
+        console.log('返回患者详情页');
+      });
+      // 保存草稿
+      $('#btn-save-draft').on('click', function () {
+        // 复杂交互 - 后续应实现：
+        // 1. 收集当前所有表单数据（input/textarea/chip 状态）
+        // 2. 调用保存接口（POST /api/records/draft），传 patientId、visitDate、所有字段
+        // 3. 成功后在 header 右侧显示 toast 提示"草稿已保存"
+        // 4. 失败时显示错误并允许重试
+        alert('草稿已保存（Mock）');
+      });
+      // 完成并保存
+      $('#btn-finish-save').on('click', function () {
+        // 复杂交互 - 后续应实现：
+        // 1. 先做表单校验：主诉、就诊日期、辨证结论、中药处方至少 1 行不能为空
+        // 2. 校验失败时滚动到第一个错误位置并高亮
+        // 3. 校验通过后提交到后端（POST /api/records）
+        // 4. 成功后显示"病历已保存"toast，并跳转到 patient-detail.html?highlight=recordId
+        if (!$('#input-complaint').val().trim()) {
+          alert('请填写主诉');
+          $('html,body').animate({ scrollTop: $('#input-complaint').offset().top - 100 }, 300);
+          return;
+        }
+        alert('病历已保存（Mock）\n即将跳转到患者详情页');
+        setTimeout(function () { window.location.href = 'patient-detail.html'; }, 800);
+      });
+
+      // ======== 上传按钮 ========
+      // 复杂交互 - 后续应实现：
+      // 1. 点击后弹出系统文件选择器（accept="image/jpeg,image/png"）
+      // 2. 校验文件大小 ≤ 5MB、类型匹配
+      // 3. 客户端压缩到 1080p，调用 /api/upload 上传到对象存储
+      // 4. 拿到 URL 后替换该上传框为"已上传：缩略图 + 重新上传/删除"两个按钮
+      // 5. 同时调用 /api/records/{id}/photos 关联到本次病历
+      $('#upload-tongue').on('click', function () {
+        console.log('调用相机/相册上传舌象照片');
+      });
+      $('#upload-face').on('click', function () {
+        console.log('调用相机/相册上传面相照片');
+      });
+
+      // ======== 添加药材 ========
+      // 复杂交互 - 后续应实现：
+      // 1. 点击后在表格底部插入一行（空白可编辑的"药名/剂量/煎法/删除"）
+      // 2. 药名 input 绑定模糊搜索下拉（防抖 200ms 调 /api/herbs?keyword=）
+      // 3. 选中后自动填充常用剂量
+      // 4. 删除时整行从 DOM 移除并重算序号/总剂量/总药味
+      // 5. 煎法 chip 单选：普通/先煎/后下/包煎/另煎/烊化/冲服
+      $('#btn-add-herb').on('click', function () {
+        console.log('添加新药材行（详见注释完整流程）');
+      });
+      // 药材行内删除
+      $('#rx-table').on('click', '.rx-del', function () {
+        // 复杂交互 - 后续应实现：
+        // 1. 弹出确认"确定删除该药材？"（小气泡确认）
+        // 2. 确认后从 DOM 移除该行，重算 #rx-count 药味数和 #rx-total 总剂量
+        // 3. 重新编号（1, 2, 3...）
+        $(this).closest('.grid').remove();
+        // 简单 recalc
+        var cnt = $('#rx-table > .grid').length;
+        $('#rx-count').text(cnt);
+        // 重新编号
+        $('#rx-table > .grid').each(function (i) {
+          $(this).children().first().text(i + 1);
+        });
+        console.log('已删除药材行，剩余', cnt, '行');
+      });
+
+      // ======== 添加外治记录 ========
+      // 复杂交互 - 后续应实现：
+      // 1. 点击后插入一张新外治卡片（结构与现有卡片一致）
+      // 2. 默认展开，允许编辑所有字段
+      // 3. 卡片头部显示序号 #3, #4...
+      // 4. 卡片右上角删除按钮（带确认）
+      $('#btn-add-ext').on('click', function () {
+        console.log('添加新外治记录卡片（详见注释完整流程）');
+      });
+      // 外治卡删除
+      $(document).on('click', '.ext-del', function () {
+        $(this).closest('.border').remove();
+        console.log('已删除外治记录');
+      });
+
+      // ======== AI 一键生成 ========
+      $('#btn-ai-generate').on('click', function () {
+        var $btn = $(this);
+        var $out = $('#ai-output');
+        var $actions = $('#ai-actions');
+        $btn.prop('disabled', true).html('<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>AI 正在辨证中...');
+        lucide.createIcons();
+
+        // 复杂交互 - 后续应实现：
+        // 1. POST /api/ai/syndrome-analysis，body 包含本病历结构化数据
+        //   （主诉、既往史、十问 chip 数据、舌脉 chip、照片 URL 等）
+        // 2. 后端调用 DeepSeek-V3 流式输出
+        // 3. 客户端用 EventSource / fetch+ReadableStream 流式渲染
+        // 4. 输出结构包含 4 部分：辨证分析、治法治则、参考药方、参考针灸/推拿穴位方
+        // 5. 渲染完成后显示"采纳"和"复制"按钮
+        setTimeout(function () {
+          $out.removeClass('flex flex-col items-center justify-center text-center').addClass('block').html(`
+            <div class="space-y-4 text-left">
+              <div>
+                <div class="text-sm font-semibold text-on-surface flex items-center gap-1.5 mb-1.5">
+                  <i data-lucide="brain" class="w-4 h-4 text-primary"></i>① 辨证分析
+                </div>
+                <div class="text-sm text-on-surface leading-relaxed bg-primary-container/20 rounded-md p-3">
+                  患者老年女性，久咳痰白稀，胸闷，入睡困难，大便不成形，舌淡胖有齿痕、苔白腻，脉沉弦。四诊合参，病位在脾、肺，属里证；病性属虚、痰湿，兼有气滞。脾虚失运，湿浊内生，上渍于肺，肺失宣降，故咳嗽痰多、胸闷；脾不升清则大便不成形；心神失养则入睡困难。综合辨证为 <strong class="text-primary">脾虚湿困、痰湿蕴肺</strong>。
+                </div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface flex items-center gap-1.5 mb-1.5">
+                  <i data-lucide="target" class="w-4 h-4 text-primary"></i>② 治法治则
+                </div>
+                <div class="text-sm text-on-surface leading-relaxed bg-primary-container/20 rounded-md p-3">
+                  <strong class="text-primary">健脾祛湿，化痰止咳</strong>，佐以宁心安神。急则治标（化痰止咳以缓胸闷咳嗽），缓则治本（健脾祛湿以杜生痰之源）。
+                </div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface flex items-center gap-1.5 mb-1.5">
+                  <i data-lucide="pill" class="w-4 h-4 text-primary"></i>③ 参考药方（参苓白术散合二陈汤加减）
+                </div>
+                <div class="text-sm text-on-surface leading-relaxed bg-primary-container/20 rounded-md p-3">
+                  党参 15g、白术 12g、茯苓 15g、炙甘草 6g、陈皮 9g、半夏 9g、杏仁 9g、浙贝母 12g、紫菀 12g、款冬花 12g、枇杷叶 9g(包煎)、生姜 3 片。7 剂，水煎服，日 1 剂，分早晚温服。
+                </div>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface flex items-center gap-1.5 mb-1.5">
+                  <i data-lucide="activity" class="w-4 h-4 text-primary"></i>④ 参考针灸 / 推拿穴位方
+                </div>
+                <div class="text-sm text-on-surface leading-relaxed bg-primary-container/20 rounded-md p-3">
+                  <strong>针灸主穴：</strong>足三里、三阴交、中脘、丰隆（健脾祛湿、化痰）；配穴：肺俞、脾俞（宣肺健脾）。补法，留针 30 分钟，每日 1 次，10 次 1 疗程。<br/>
+                  <strong>艾灸：</strong>足三里、肺俞温和灸各 15 分钟；<strong>推拿：</strong>腰背膀胱经及脾胃经按揉各 10 分钟。
+                </div>
+              </div>
+            </div>
+          `);
+          lucide.createIcons();
+          $actions.removeClass('hidden');
+          $btn.prop('disabled', false).html('<i data-lucide="refresh-cw" class="w-4 h-4"></i>重新生成');
+          lucide.createIcons();
+        }, 1800);
+      });
+
+      // AI 采纳到处方
+      // 复杂交互 - 后续应实现：
+      // 1. 解析 AI 输出中的"参考药方"段（正则匹配 "药名 剂量g" 模式）
+      // 2. 清空 #rx-table 当前所有行
+      // 3. 按解析结果重新生成表格行（含煎法标识）
+      // 4. 重算 #rx-count / #rx-total
+      // 5. 滚动到 Section 7 处并高亮新表格 1.5 秒
+      $('#btn-ai-apply-rx').on('click', function () {
+        alert('已采纳 AI 建议到处方（Mock）\n实际实现会解析 AI 输出 → 替换 Section 7 表格');
+        $('html,body').animate({ scrollTop: $('section:has(#rx-table)').offset().top - 80 }, 400);
+      });
+
+      // AI 复制到医嘱
+      // 复杂交互 - 后续应实现：
+      // 1. 将当前医嘱 textarea 的内容与 AI 建议的"医嘱"段合并
+      // 2. 追加一条分隔线和"AI 建议："前缀
+      // 3. 滚动到 Section 10 并高亮医嘱 textarea
+      $('#btn-ai-copy-advice').on('click', function () {
+        var cur = $('#input-advice').val().trim();
+        var aiAdd = '【AI 参考】节饮食，避风寒，畅情志；适当运动以助脾运。';
+        $('#input-advice').val(cur ? cur + '\\n\\n' + aiAdd : aiAdd);
+        alert('AI 建议已追加到医嘱（Mock）');
+        $('html,body').animate({ scrollTop: $('#input-advice').offset().top - 100 }, 400);
+      });
+
+      // 自定义过敏项添加
+      // 复杂交互 - 后续应实现：
+      // 1. 回车后将 #input-allergy-custom 的文本作为新 chip 插入 #allergy 容器
+      // 2. 新 chip 自动 is-danger 样式（过敏类）
+      // 3. 点击新 chip 切换 active 状态
+      $('#input-allergy-custom').on('keydown', function (e) {
+        if (e.key === 'Enter' && this.value.trim()) {
+          var v = this.value.trim();
+          $('#allergy').append('<button class="chip is-danger is-active">⚠ ' + v + '</button>');
+          this.value = '';
+        }
+      });
+
     });
   </script>
 
