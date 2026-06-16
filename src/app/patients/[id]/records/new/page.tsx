@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   ChevronRight,
   Plus,
@@ -17,10 +18,11 @@ import {
   Info,
   ImagePlus,
   Camera,
+  FileText,
 } from 'lucide-react';
 import { PulseSelector, defaultFullPulseData, FullPulseData, formatPulseData } from '@/components/pulse-selector';
 import { TongueSelector, defaultTongueData, TongueData, formatTongueData } from '@/components/tongue-selector';
-import { FACE_COLORS, FACE_COLOR_DETAILS, EXPRESSIONS, COMMON_HERBS, HERB_UNITS, getHerbSpecialHandling, getSpecialHandlingLabel } from '@/lib/tcm-data';
+import { FACE_COLORS, FACE_COLOR_DETAILS, EXPRESSIONS, UNIQUE_COMMON_HERBS as COMMON_HERBS, HERB_UNITS, HERB_PINYIN, getHerbSpecialHandling, getSpecialHandlingLabel } from '@/lib/tcm-data';
 import {
   Tooltip,
   TooltipContent,
@@ -40,13 +42,74 @@ const TREATMENTS = ['普通针刺', '温针灸', '电针', '艾灸', '拔罐', '
 type Herb = { name: string; dose: string; unit: string; specialHandling?: string };
 type DiagnosisResult = { loading: boolean; result: string };
 
+interface Patient {
+  id: string;
+  name: string;
+  gender: string;
+  age: number;
+  constitution: string;
+  allergies: string[];
+  chronicDiseases?: string[];
+  firstVisit?: string;
+  note?: string;
+}
+
+const PATIENTS: Patient[] = [
+  { id: 'p001', name: '陈秀英', gender: '女', age: 58, constitution: '气郁质', allergies: ['青霉素'] },
+  { id: 'p002', name: '刘建国', gender: '男', age: 45, constitution: '平和质', allergies: [] },
+  { id: 'p003', name: '张小敏', gender: '女', age: 32, constitution: '气虚质', allergies: ['海鲜'] },
+  { id: 'p004', name: '李子轩', gender: '男', age: 8, constitution: '特禀质', allergies: ['花粉'] },
+  { id: 'p005', name: '黄美华', gender: '女', age: 67, constitution: '痰湿质', allergies: [] },
+  { id: 'p006', name: '赵晓东', gender: '男', age: 52, constitution: '湿热质', allergies: [] },
+];
+
+const fetchPatient = (id: string): Patient | null => {
+  const found = PATIENTS.find(p => p.id === id);
+  if (found) return found;
+  
+  try {
+    const newPatients = JSON.parse(sessionStorage.getItem('newPatients') || '{}');
+    return newPatients[id] || null;
+  } catch {
+    return null;
+  }
+};
+
 export default function RecordEditPage({ params }: { params: Promise<{ id: string }> }) {
-  // 简化：直接用静态患者信息
-  const patient = { id: 'p001', name: '陈秀英', age: 58, gender: '女' };
+  const router = useRouter();
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    params.then(async ({ id }) => {
+      if (!isMounted) return;
+      const data = fetchPatient(id);
+      if (data) {
+        setPatient(data);
+        setConstitution(data.constitution || '');
+        setAllergies(data.allergies || []);
+      } else {
+        router.replace('/patients');
+      }
+      setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (!patient) return null;
 
   // 状态
   const [chiefComplaint, setChiefComplaint] = useState('');
-  const [allergies, setAllergies] = useState<string[]>(['青霉素']);
+  const [allergies, setAllergies] = useState<string[]>([]);
   const [newAllergy, setNewAllergy] = useState('');
 
   // 脉象（使用新的详细数据结构）
@@ -59,7 +122,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const [faceColor, setFaceColor] = useState<string[]>([]);
   const [expression, setExpression] = useState<string[]>([]);
 
-  const [constitution, setConstitution] = useState<string>('气郁质');
+  const [constitution, setConstitution] = useState<string>('');
   const [syndromeLocations, setSyndromeLocations] = useState<string[]>(['肝', '脾']);
   const [syndromeNatures, setSyndromeNatures] = useState<string[]>(['气滞', '血瘀']);
   const [syndrome, setSyndrome] = useState('肝郁脾虚');
@@ -84,29 +147,25 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const [photos, setPhotos] = useState<{ id: string; type: 'tongue' | 'face'; url: string; name: string }[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const handlePhotoUpload = async (type: 'tongue' | 'face', file: File) => {
+  const handlePhotoUpload = (type: 'tongue' | 'face', file: File) => {
     setUploadingPhoto(true);
-    try {
-      // 模拟上传
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // 使用 base64 预览
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newPhoto = {
-          id: `photo-${Date.now()}`,
-          type,
-          url: e.target?.result as string,
-          name: file.name,
-        };
-        setPhotos([...photos, newPhoto]);
-        setUploadingPhoto(false);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const newPhoto = {
+        id: `photo-${Date.now()}`,
+        type,
+        url: e.target?.result as string,
+        name: file.name,
       };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('上传失败:', error);
-      alert('上传失败，请重试');
+      setPhotos(prev => [...prev, newPhoto]);
       setUploadingPhoto(false);
-    }
+    };
+    reader.onerror = () => {
+      console.error('读取文件失败');
+      alert('读取文件失败，请重试');
+      setUploadingPhoto(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removePhoto = (id: string) => {
@@ -165,23 +224,22 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const totalHerbDose = herbs.reduce((s, h) => s + (parseFloat(h.dose) || 0), 0);
 
   // 保存病历
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
   const handleSave = async () => {
+    // 表单验证
+    if (!chiefComplaint.trim()) {
+      alert('请填写主诉');
+      return;
+    }
+    const validHerbs = herbs.filter(h => h.name.trim());
+    if (validHerbs.length === 0) {
+      alert('请至少添加一味中药');
+      return;
+    }
     setSaveStatus('saving');
     try {
-      // 模拟保存操作
       await new Promise(resolve => setTimeout(resolve, 1000));
-      // 保存成功后跳转到患者详情页（使用当前路由参数中的患者ID）
-      // 获取当前页面的患者ID
-      const pathParts = window.location.pathname.split('/');
-      const patientIdIndex = pathParts.findIndex(p => p === 'patients') + 1;
-      const currentPatientId = pathParts[patientIdIndex];
-      
-      if (currentPatientId) {
-        window.location.href = `/patients/${currentPatientId}`;
-      } else {
-        window.location.href = '/patients';
-      }
+      router.push(`/patients/${patient.id}`);
     } catch (error) {
       console.error('保存失败:', error);
       alert('保存失败，请重试');
@@ -574,105 +632,107 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
             ) : (
               herbs.map((h, idx) => {
                 const filteredHerbs = COMMON_HERBS.filter(herb => 
-                  herb.name.includes(herbSearch) || herb.pinyin?.includes(herbSearch.toLowerCase())
+                  herb.name.includes(herbSearch) || 
+                  (HERB_PINYIN[herb.name]?.includes(herbSearch.toLowerCase()))
                 );
                 return (
-                <div
-                  key={`${h.name}-${idx}`}
-                  className="flex items-center gap-2 bg-surface-container/40 rounded-md p-2 border border-outline-variant/30 relative"
-                >
-                  <div className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-                    {idx + 1}
-                  </div>
-                  <div className="relative flex-1">
+                  <div
+                    key={`${h.name}-${idx}`}
+                    className="flex items-center gap-2 bg-surface-container/40 rounded-md p-2 border border-outline-variant/30 relative"
+                  >
+                    <div className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                      {idx + 1}
+                    </div>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={h.name}
+                        onChange={(e) => {
+                          updateHerbField(idx, 'name', e.target.value);
+                          setHerbSearch(e.target.value);
+                          setHerbDropdownIdx(idx);
+                        }}
+                        onFocus={() => setHerbDropdownIdx(idx)}
+                        onBlur={() => setTimeout(() => setHerbDropdownIdx(null), 200)}
+                        placeholder="药名"
+                        className="w-full h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                      {herbDropdownIdx === idx && filteredHerbs.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant/30 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                          {filteredHerbs.slice(0, 20).map((herb) => (
+                            <button
+                              key={herb.name}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                updateHerbField(idx, 'name', herb.name);
+                                updateHerbField(idx, 'dose', String(herb.dose));
+                                updateHerbField(idx, 'unit', herb.unit);
+                                if (herb.special) {
+                                  setHerbs(herbs.map((x, i) => 
+                                    i === idx ? { ...x, specialHandling: herb.special } : x
+                                  ));
+                                }
+                                setHerbDropdownIdx(null);
+                                setHerbSearch('');
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 flex items-center justify-between"
+                            >
+                              <span>{herb.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {herb.dose}{herb.unit} {herb.category && `· ${herb.category}`}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <input
-                      type="text"
-                      value={h.name}
-                      onChange={(e) => {
-                        updateHerbField(idx, 'name', e.target.value);
-                        setHerbSearch(e.target.value);
-                        setHerbDropdownIdx(idx);
-                      }}
-                      onFocus={() => setHerbDropdownIdx(idx)}
-                      onBlur={() => setTimeout(() => setHerbDropdownIdx(null), 200)}
-                      placeholder="药名"
-                      className="w-full h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      type="number"
+                      value={h.dose}
+                      onChange={(e) => updateHerbField(idx, 'dose', e.target.value)}
+                      placeholder="剂量"
+                      min={0}
+                      step="0.5"
+                      className="w-14 h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
-                    {herbDropdownIdx === idx && filteredHerbs.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant/30 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
-                        {filteredHerbs.slice(0, 20).map((herb) => (
-                          <button
-                            key={herb.name}
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              updateHerbField(idx, 'name', herb.name);
-                              updateHerbField(idx, 'dose', String(herb.dose));
-                              updateHerbField(idx, 'unit', herb.unit);
-                              if (herb.special) {
-                                setHerbs(herbs.map((x, i) => 
-                                  i === idx ? { ...x, specialHandling: herb.special } : x
-                                ));
-                              }
-                              setHerbDropdownIdx(null);
-                              setHerbSearch('');
-                            }}
-                            className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 flex items-center justify-between"
-                          >
-                            <span>{herb.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {herb.dose}{herb.unit} {herb.category && `· ${herb.category}`}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <select
+                      value={h.unit}
+                      onChange={(e) => updateHerbField(idx, 'unit', e.target.value)}
+                      className="w-14 h-8 px-2 bg-surface border border-outline-variant/30 rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      {HERB_UNITS.map((unit) => (
+                        <option key={unit.id} value={unit.id}>{unit.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => toggleHerbSpecialHandling(idx)}
+                      className={`h-8 px-2 rounded text-xs font-medium transition-colors ${
+                        h.specialHandling
+                          ? h.specialHandling === 'decoct_first'
+                            ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                            : h.specialHandling === 'decoct_last'
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : h.specialHandling === 'wrap_decoct'
+                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                            : 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : 'bg-surface border border-outline-variant/30 text-muted-foreground hover:bg-surface-container/70'
+                      }`}
+                    >
+                      {h.specialHandling ? getSpecialHandlingLabel(h.specialHandling) : '特殊'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeHerb(idx)}
+                      className="p-1.5 hover:bg-error/10 text-muted-foreground hover:text-error rounded"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <input
-                    type="number"
-                    value={h.dose}
-                    onChange={(e) => updateHerbField(idx, 'dose', e.target.value)}
-                    placeholder="剂量"
-                    min={0}
-                    step="0.5"
-                    className="w-14 h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <select
-                    value={h.unit}
-                    onChange={(e) => updateHerbField(idx, 'unit', e.target.value)}
-                    className="w-14 h-8 px-2 bg-surface border border-outline-variant/30 rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  >
-                    {HERB_UNITS.map((unit) => (
-                      <option key={unit.id} value={unit.id}>{unit.name}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => toggleHerbSpecialHandling(idx)}
-                    className={`h-8 px-2 rounded text-xs font-medium transition-colors ${
-                      h.specialHandling
-                        ? h.specialHandling === 'decoct_first'
-                          ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                          : h.specialHandling === 'decoct_last'
-                          ? 'bg-green-100 text-green-700 border border-green-200'
-                          : h.specialHandling === 'wrap_decoct'
-                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                          : 'bg-purple-100 text-purple-700 border border-purple-200'
-                        : 'bg-surface border border-outline-variant/30 text-muted-foreground hover:bg-surface-container/70'
-                    }`}
-                  >
-                    {h.specialHandling ? getSpecialHandlingLabel(h.specialHandling) : '特殊'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeHerb(idx)}
-                    className="p-1.5 hover:bg-error/10 text-muted-foreground hover:text-error rounded"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
                 );
-              })}
+              })
+            )}
             </div>
             <div className="mt-3 flex gap-2">
               <button
@@ -805,7 +865,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
         </Section>
 
         {/* Section I: 病例摘要 */}
-        <Section icon={FileTextIcon} title="病例摘要与医嘱" subtitle="本次诊疗总结">
+        <Section icon={FileText} title="病例摘要与医嘱" subtitle="本次诊疗总结">
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -891,7 +951,7 @@ function Section({
     >
       <div className="flex items-start gap-3 mb-4">
         <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          <Icon className="w-4.5 h-4.5" />
+          <Icon className="w-[18px] h-[18px]" />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-foreground">{title}</h2>
@@ -949,16 +1009,5 @@ function ChipGroup({
         })}
       </div>
     </div>
-  );
-}
-
-function FileTextIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-    </svg>
   );
 }

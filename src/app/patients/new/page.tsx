@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Save,
@@ -27,6 +29,7 @@ const CONSTITUTIONS = [
 ];
 
 export default function NewPatientPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     gender: '女',
@@ -46,11 +49,12 @@ export default function NewPatientPage() {
     
     // 验证必填项（姓名和年龄必填，体质类型选填）
     if (!formData.name.trim()) {
-      alert('请输入患者姓名');
+      toast.error('请输入患者姓名');
       return;
     }
-    if (!formData.age.trim()) {
-      alert('请输入患者年龄');
+    const ageNum = parseInt(formData.age);
+    if (!formData.age.trim() || isNaN(ageNum) || ageNum < 0 || ageNum > 120) {
+      toast.error('请输入有效的年龄（0-120）');
       return;
     }
 
@@ -62,12 +66,13 @@ export default function NewPatientPage() {
       
       // 演示模式：生成临时ID，将患者数据存储到 sessionStorage
       const tempId = 'p' + Date.now();
-      const allergyList = formData.allergies ? formData.allergies.split('、').filter(Boolean) : [];
+      const allergyList = formData.allergies ? formData.allergies.split(/[,，、]/).filter(Boolean) : [];
+      const chronicList = formData.chronicDiseases ? formData.chronicDiseases.split(/[,，、]/).filter(Boolean) : [];
       const newPatient = {
         id: tempId,
         name: formData.name,
         gender: formData.gender,
-        age: parseInt(formData.age) || 0,
+        age: ageNum,
         phone: formData.phone,
         occupation: formData.occupation,
         constitution: formData.constitution,
@@ -75,11 +80,11 @@ export default function NewPatientPage() {
         lastVisit: new Date().toISOString().split('T')[0],
         visitCount: 0,
         hasAllergy: allergyList.length > 0,
-        allergy: allergyList[0] || '',
-        // 保留数组格式用于详情页
+        allergy: allergyList.join('、'),
         allergies: allergyList,
-        chronicDiseases: formData.chronicDiseases ? formData.chronicDiseases.split('、').filter(Boolean) : [],
+        chronicDiseases: chronicList,
         firstVisit: new Date().toISOString().split('T')[0],
+        note: formData.note,
       };
       
       // 存储到 sessionStorage
@@ -91,11 +96,11 @@ export default function NewPatientPage() {
         console.error('sessionStorage 不可用:', e);
       }
       
-      // 跳转到患者详情页
-      window.location.href = `/patients/${tempId}`;
+      toast.success('患者档案创建成功');
+      router.push(`/patients/${tempId}`);
     } catch (error) {
       console.error('保存失败:', error);
-      alert('保存失败，请重试');
+      toast.error('保存失败，请重试');
       setIsSubmitting(false);
     }
   };

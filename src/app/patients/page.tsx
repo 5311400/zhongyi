@@ -15,7 +15,27 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const PATIENTS = [
+interface Patient {
+  id: string;
+  name: string;
+  gender: string;
+  age: number;
+  phone: string;
+  constitution: string;
+  lastDiagnosis: string;
+  lastVisit: string;
+  visitCount: number;
+  hasAllergy: boolean;
+  allergy: string;
+  isNew?: boolean;
+  // 扩展字段（新建患者时使用）
+  allergies?: string[];
+  chronicDiseases?: string[];
+  firstVisit?: string;
+  note?: string;
+}
+
+const PATIENTS: Patient[] = [
   {
     id: 'p001',
     name: '陈秀英',
@@ -109,21 +129,29 @@ const CONSTITUTION_COLORS: Record<string, string> = {
 };
 
 export default function PatientsPage() {
-  const [allPatients, setAllPatients] = useState<typeof PATIENTS>(PATIENTS);
+  const [allPatients, setAllPatients] = useState<Patient[]>(PATIENTS);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // 从 sessionStorage 加载新建的患者
     try {
       const newPatients = JSON.parse(sessionStorage.getItem('newPatients') || '{}');
-      const newPatientList = Object.values(newPatients);
+      const newPatientList: Patient[] = Object.values(newPatients);
       if (newPatientList.length > 0) {
-        // 将新建的患者添加到列表开头
-        setAllPatients([...newPatientList as typeof PATIENTS, ...PATIENTS]);
+        const merged = [...newPatientList.map(p => ({ ...p, isNew: true })), ...PATIENTS];
+        const unique = merged.filter((p, idx, self) => self.findIndex(p2 => p2.id === p.id) === idx);
+        setAllPatients(unique);
       }
     } catch (e) {
       console.error('读取新建患者失败:', e);
     }
   }, []);
+
+  const filteredPatients = allPatients.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.phone.includes(searchTerm) ||
+    p.lastDiagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.constitution.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,6 +191,8 @@ export default function PatientsPage() {
             <input
               type="search"
               placeholder="按姓名、电话、诊断或体质搜索…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-10 pl-10 pr-3 bg-surface-container border-none rounded-md text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
@@ -171,7 +201,7 @@ export default function PatientsPage() {
         {/* Patient list */}
         <div className="bg-surface rounded-xl border border-outline-variant/30 shadow-card overflow-hidden">
           <ul className="divide-y divide-outline-variant/30">
-            {allPatients.map((patient) => (
+            {filteredPatients.map((patient) => (
               <li key={patient.id} className="hover:bg-surface-container/40 transition-colors">
                 <div className="flex items-center gap-4 p-4">
                   <Link
@@ -185,6 +215,11 @@ export default function PatientsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                        {patient.isNew && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded font-medium">
+                            新
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {patient.gender} · {patient.age} 岁
                         </span>
@@ -244,18 +279,26 @@ export default function PatientsPage() {
         </div>
 
         {/* Empty state hint */}
-        {PATIENTS.length === 0 && (
+        {filteredPatients.length === 0 && (
           <div className="bg-surface rounded-xl border border-outline-variant/30 p-12 text-center shadow-card">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">暂无患者档案</h3>
-            <p className="text-sm text-muted-foreground mb-4">创建第一位患者，开启您的中医诊疗档案管理</p>
-            <Link
-              href="/patients/new"
-              className="inline-flex px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              新建患者
-            </Link>
+            <h3 className="text-lg font-semibold text-foreground mb-1">
+              {allPatients.length === 0 ? '暂无患者档案' : '未找到匹配患者'}
+            </h3>
+            {allPatients.length === 0 ? (
+              <p className="text-sm text-muted-foreground mb-4">创建第一位患者，开启您的中医诊疗档案管理</p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">请尝试调整搜索条件</p>
+            )}
+            {allPatients.length === 0 && (
+              <Link
+                href="/patients/new"
+                className="inline-flex px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                新建患者
+              </Link>
+            )}
           </div>
         )}
       </main>

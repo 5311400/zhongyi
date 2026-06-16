@@ -27,7 +27,7 @@ export const PULSE_TYPES = [
   { id: 'xian', name: '弦', category: 'strength' },
   { id: 'ruo', name: '弱', category: 'strength' },
   { id: 'xi', name: '细', category: 'strength' },
-  { id: 'fu2', name: '伏', category: 'strength' },
+  { id: 'fu-cang', name: '伏', category: 'strength' },
   { id: 'dong', name: '动', category: 'strength' },
   { id: 'da', name: '大', category: 'strength' },
   { id: 'ji', name: '疾', category: 'special' },
@@ -130,7 +130,7 @@ export const PULSE_DETAILS: Record<string, { feature: string; meaning: string; e
     meaning: '主气血两虚，湿证；阴虚、血虚证；慢性病患者',
     examples: '细而有力为湿证，细而无力为气血两虚',
   },
-  fu2: {
+  'fu-cang': {
     feature: '推筋着骨始得',
     meaning: '主邪闭、剧烈疼痛、厥证',
   },
@@ -262,8 +262,8 @@ export const TONGUE_COLOR_DETAILS: Record<string, { meaning: string; symptoms: s
     symptoms: '全舌青紫——全身血行瘀滞；局部瘀斑——局部血络损伤；淡紫湿润——寒凝血瘀；紫红干枯——热毒炽盛',
   },
   'an': {
-    meaning: '主气血瘀滞、脏腑功能减退',
-    symptoms: '多见于慢性病、久病入络',
+    meaning: '主气血瘀滞、脏腑功能减退，气血运行不畅',
+    symptoms: '多见于慢性病、久病入络；舌暗而紫——血瘀较重；舌暗淡——气虚血瘀；舌暗而湿润——阳虚血瘀',
   },
 };
 
@@ -424,7 +424,7 @@ export const HERB_SPECIAL_HANDLING = {
   decoct_first: [
     '附子', '川乌', '草乌', '麻黄', '桂枝', '干姜', '高良姜',
     '石膏', '寒水石', '滑石', '磁石', '代赭石', '龙骨', '牡蛎',
-    '龟板', '鳖甲', '穿山甲', '鹿角', '阿胶', '熟地', '何首乌',
+    '龟板', '鳖甲', '穿山甲', '鹿角', '熟地', '何首乌',
   ],
   // 后下
   decoct_last: [
@@ -441,6 +441,145 @@ export const HERB_SPECIAL_HANDLING = {
   dissolve: [
     '阿胶', '鹿角胶', '龟板胶', '鳖甲胶', '蜂蜜', '饴糖',
   ],
+};
+
+/**
+ * 常用中药拼音映射表（用于搜索）
+ */
+export const HERB_PINYIN: Record<string, string> = {
+  // 解表药
+  '麻黄': 'mahuang',
+  '桂枝': 'guizhi',
+  '紫苏': 'zisu',
+  '生姜': 'shengjiang',
+  '薄荷': 'bohe',
+  '荆芥': 'jingjie',
+  '防风': 'fangfeng',
+  '桑叶': 'sangye',
+  '菊花': 'juhua',
+  // 清热药
+  '石膏': 'shigao',
+  '知母': 'zhimu',
+  '黄连': 'huanglian',
+  '黄芩': 'huangqin',
+  '金银花': 'jinyinhua',
+  '连翘': 'lianqiao',
+  '蒲公英': 'pugongying',
+  '鱼腥草': 'yuxingcao',
+  // 泻下药
+  '大黄': 'dahuang',
+  '芒硝': 'mangxiao',
+  '番泻叶': 'fanxieye',
+  // 祛风湿药
+  '独活': 'duhuo',
+  '威灵仙': 'weilingxian',
+  '木瓜': 'mugua',
+  '秦艽': 'qinjiao',
+  // 化湿药
+  '藿香': 'huoxiang',
+  '佩兰': 'peilan',
+  '砂仁': 'sharen',
+  '豆蔻': 'doukou',
+  // 利水渗湿药
+  '茯苓': 'fuling',
+  '薏苡仁': 'yiyiren',
+  '泽泻': 'zexie',
+  '车前子': 'cheqianzi',
+  // 温里药
+  '附子': 'fuzi',
+  '干姜': 'ganjiang',
+  '肉桂': 'rougui',
+  '高良姜': 'gaoliangjiang',
+  // 理气药
+  '陈皮': 'chenpi',
+  '青皮': 'qingpi',
+  '枳实': 'zhishi',
+  '枳壳': 'zhike',
+  '木香': 'muxiang',
+  '香附': 'xiangfu',
+  '乌药': 'wuyao',
+  '柴胡': 'chaihu',
+  // 活血药
+  '川芎': 'chuanxiong',
+  '当归': 'danggui',
+  '白芍': 'baishao',
+  '赤芍': 'chishao',
+  '桃仁': 'taoren',
+  '红花': 'honghua',
+  '丹参': 'danshen',
+  '益母草': 'yimucao',
+  // 止血药
+  '仙鹤草': 'xianhecao',
+  '白及': 'baiji',
+  '三七': 'sanqi',
+  '蒲黄': 'puhuang',
+  // 消食药
+  '山楂': 'shanzha',
+  '神曲': 'shenqu',
+  '麦芽': 'maiya',
+  '鸡内金': 'jineijin',
+  // 驱虫药
+  '槟榔': 'binlang',
+  '南瓜子': 'nanguazi',
+  // 化痰药
+  '半夏': 'banxia',
+  '天南星': 'tiannanxing',
+  '川贝母': 'chuanbeimu',
+  '浙贝母': 'zhebeimu',
+  '瓜蒌': 'gualou',
+  '桔梗': 'jiegeng',
+  '旋覆花': 'xuanfuhua',
+  // 止咳平喘药
+  '杏仁': 'xingren',
+  '百部': 'baibu',
+  '紫菀': 'ziwan',
+  '款冬花': 'kuandonghua',
+  '苏子': 'suzi',
+  // 安神药
+  '酸枣仁': 'suanzaoren',
+  '柏子仁': 'baiziren',
+  '远志': 'yuanzhi',
+  '合欢皮': 'hehuanpi',
+  // 平肝息风药
+  '天麻': 'tianma',
+  '钩藤': 'gouteng',
+  '石决明': 'shijueming',
+  '牡蛎': 'muli',
+  '代赭石': 'daizheshi',
+  // 开窍药
+  '麝香': 'shexiang',
+  '冰片': 'bingpian',
+  '苏合香': 'suhexiang',
+  // 补益药
+  '人参': 'renshen',
+  '西洋参': 'xiyangshen',
+  '党参': 'dangshen',
+  '黄芪': 'huangqi',
+  '白术': 'baishu',
+  '山药': 'shanyao',
+  '甘草': 'gancao',
+  '鹿茸': 'lurong',
+  '淫羊藿': 'yinyanghuo',
+  '杜仲': 'duzhong',
+  '续断': 'xuduan',
+  '熟地': 'shudi',
+  '何首乌': 'heshouwu',
+  '阿胶': 'ejiao',
+  '麦冬': 'maidong',
+  '天冬': 'tiandong',
+  '沙参': 'shashen',
+  '枸杞子': 'gouqizi',
+  '女贞子': 'nuzhenzi',
+  // 收涩药
+  '五味子': 'wuweizi',
+  '乌梅': 'wumei',
+  '肉豆蔻': 'roudoukou',
+  '莲子': 'lianzi',
+  '芡实': 'qianshi',
+  '山茱萸': 'shanzhuyu',
+  // 其他
+  '大枣': 'dazao',
+  '葱白': 'congbai',
 };
 
 /**
@@ -612,6 +751,17 @@ export function getSpecialHandlingLabel(type: string): string {
   };
   return labels[type] || type;
 }
+
+/**
+ * 去重后的常用中药列表
+ */
+export const UNIQUE_COMMON_HERBS = COMMON_HERBS.reduce((acc, herb) => {
+  const existing = acc.find(h => h.name === herb.name);
+  if (!existing) {
+    acc.push(herb);
+  }
+  return acc;
+}, [] as typeof COMMON_HERBS);
 
 // ==================== 辅助函数 ====================
 

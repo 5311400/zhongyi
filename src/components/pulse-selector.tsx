@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Info, X, Plus } from 'lucide-react';
 import {
   PULSE_TYPES,
@@ -14,6 +14,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+// 默认显示的主脉数量
+const DEFAULT_VISIBLE_PULSES = 15;
 
 /**
  * 单个脉象项（主脉+修饰符）
@@ -111,6 +114,7 @@ export function PulseSelector({ value, onChange }: PulseSelectorProps) {
             value={value.overall || emptyPulsePosition}
             onChange={(posData) => onChange({ ...value, overall: posData })}
             showPositionLabel={false}
+            showClearButton={true}
           />
         </div>
 
@@ -180,6 +184,7 @@ interface PulsePositionSelectorProps {
   value: PulsePositionData;
   onChange: (data: PulsePositionData) => void;
   showPositionLabel?: boolean;
+  showClearButton?: boolean;
 }
 
 function PulsePositionSelector({
@@ -188,9 +193,18 @@ function PulsePositionSelector({
   value,
   onChange,
   showPositionLabel = true,
+  showClearButton = false,
 }: PulsePositionSelectorProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState('');
+
+  useEffect(() => {
+    const hasOther = value.pulses.some((p) => p.mainPulse === 'other');
+    setShowCustomInput(hasOther);
+    if (hasOther && value.customText) {
+      setCustomText(value.customText);
+    }
+  }, [value.pulses, value.customText]);
 
   // 添加主脉
   const handleAddPulse = (pulseId: string) => {
@@ -223,20 +237,25 @@ function PulsePositionSelector({
 
   // 添加自定义脉象
   const handleAddCustom = () => {
-    if (customText.trim()) {
+    if (!customText.trim()) return;
+    const hasOther = value.pulses.some((p) => p.mainPulse === 'other');
+    if (hasOther) {
+      onChange({ ...value, customText: customText.trim() });
+    } else {
       onChange({
         ...value,
         pulses: [...value.pulses, { mainPulse: 'other', modifiers: [] }],
         customText: customText.trim(),
       });
-      setCustomText('');
-      setShowCustomInput(false);
     }
+    setCustomText('');
+    setShowCustomInput(false);
   };
 
   // 清空该脉位
   const handleClear = () => {
     setShowCustomInput(false);
+    setCustomText('');
     onChange({ pulses: [], customText: '' });
   };
 
@@ -265,11 +284,13 @@ function PulsePositionSelector({
   return (
     <div className="bg-surface rounded-md p-2 border border-outline-variant/30">
       {/* 脉位标题 */}
-      {showPositionLabel && label && (
+      {(showPositionLabel && label) || (!showPositionLabel && showClearButton) ? (
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1">
-            <span className="text-xs font-semibold text-foreground">{label}</span>
-            {description && (
+            {showPositionLabel && label && (
+              <span className="text-xs font-semibold text-foreground">{label}</span>
+            )}
+            {showPositionLabel && description && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="w-3 h-3 text-muted-foreground cursor-help" />
@@ -291,7 +312,7 @@ function PulsePositionSelector({
             </button>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* 当前选中显示 */}
       {displayText && (
@@ -329,7 +350,7 @@ function PulsePositionSelector({
       <div className="mb-2">
         <div className="text-[10px] text-muted-foreground mb-1">主脉（可多选）</div>
         <div className="flex flex-wrap gap-1">
-          {PULSE_TYPES.slice(0, 15).map((pulse) => {
+          {PULSE_TYPES.slice(0, DEFAULT_VISIBLE_PULSES).map((pulse) => {
             const isSelected = value.pulses.some((p) => p.mainPulse === pulse.id);
             return (
               <Tooltip key={pulse.id}>
@@ -362,7 +383,7 @@ function PulsePositionSelector({
               更多
             </summary>
             <div className="mt-1 flex flex-wrap gap-1">
-              {PULSE_TYPES.slice(15).map((pulse) => {
+              {PULSE_TYPES.slice(DEFAULT_VISIBLE_PULSES).map((pulse) => {
                 const isSelected = value.pulses.some((p) => p.mainPulse === pulse.id);
                 return (
                   <Tooltip key={pulse.id}>
@@ -441,7 +462,7 @@ function PulsePositionSelector({
                       <TooltipTrigger asChild>
                         <button
                           type="button"
-                          onClick={() => handleModifierToggle(item.mainPulse!, mod.id)}
+                          onClick={() => handleModifierToggle(item.mainPulse, mod.id)}
                           className={`h-5 px-1.5 rounded text-[10px] transition-colors ${
                             item.modifiers.includes(mod.id)
                               ? 'bg-primary/20 text-primary border border-primary/30 font-medium'
@@ -497,7 +518,7 @@ export function formatPulseData(data: FullPulseData): string {
   if (rightParts.length > 0) parts.push(rightParts.join('、'));
 
   // 总体
-  if (data.overall?.pulses.length > 0) {
+  if (data.overall?.pulses?.length) {
     const text = formatPulsePosition(data.overall);
     if (text) parts.push(`总体${text}`);
   }

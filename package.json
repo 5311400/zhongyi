@@ -1,6 +1,6 @@
 {
   "name": "projects",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "build": "bash ./scripts/build.sh",
@@ -49,7 +49,6 @@
     "coze-coding-dev-sdk": "^0.7.24",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
     "embla-carousel-react": "^8.6.0",
@@ -82,8 +81,9 @@
     "eslint-config-next": "16.1.1",
     "only-allow": "^1.2.2",
     "react-dev-inspector": "^2.0.1",
-    "shadcn": "latest",
+    "shadcn": "2.1.2",
     "tailwindcss": "^4",
+    "drizzle-kit": "^0.31.8",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5"

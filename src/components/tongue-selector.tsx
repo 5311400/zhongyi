@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Info, X } from 'lucide-react';
 import {
   TONGUE_COLORS,
@@ -172,6 +172,10 @@ function TongueItemSelector({
 }: TongueItemSelectorProps) {
   const [showCustomInput, setShowCustomInput] = useState(value.selected === 'other');
 
+  useEffect(() => {
+    setShowCustomInput(value.selected === 'other');
+  }, [value.selected]);
+
   // 选择项
   const handleSelect = (id: string) => {
     if (id === 'other') {
@@ -341,6 +345,15 @@ function TongueMultiItemSelector({
   const [customInputVisible, setCustomInputVisible] = useState(false);
   const [customText, setCustomText] = useState('');
 
+  useEffect(() => {
+    const hasOther = value.some((v) => v.selected === 'other');
+    setCustomInputVisible(hasOther);
+    if (hasOther) {
+      const otherItem = value.find((v) => v.selected === 'other');
+      setCustomText(otherItem?.customText || '');
+    }
+  }, [value]);
+
   // 添加选项
   const handleAdd = (id: string) => {
     if (!value.find((v) => v.selected === id)) {
@@ -354,7 +367,8 @@ function TongueMultiItemSelector({
   };
 
   // 更新某项的程度
-  const handleDegreeChange = (id: string, degreeId: string) => {
+  const handleDegreeChange = (id: string | null, degreeId: string) => {
+    if (!id) return;
     onChange(
       value.map((v) => (v.selected === id ? { ...v, degree: degreeId } : v))
     );
@@ -362,16 +376,22 @@ function TongueMultiItemSelector({
 
   // 添加自定义项
   const handleAddCustom = () => {
-    if (customText.trim()) {
+    if (!customText.trim()) return;
+    const existingOtherIndex = value.findIndex((v) => v.selected === 'other');
+    if (existingOtherIndex >= 0) {
+      const newValue = [...value];
+      newValue[existingOtherIndex] = { ...newValue[existingOtherIndex], customText: customText.trim() };
+      onChange(newValue);
+    } else {
       onChange([...value, { selected: 'other', degree: null, customText: customText.trim() }]);
-      setCustomText('');
-      setCustomInputVisible(false);
     }
+    setCustomText('');
+    setCustomInputVisible(false);
   };
 
   // 移除自定义项
-  const handleRemoveCustom = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
+  const handleRemoveCustom = () => {
+    onChange(value.filter((v) => v.selected !== 'other'));
   };
 
   // 获取显示文本
@@ -387,7 +407,18 @@ function TongueMultiItemSelector({
 
   return (
     <div className="mb-3">
-      <div className="text-xs font-medium text-foreground mb-1.5">{label}</div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-foreground">{label}</span>
+        {value.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="text-xs text-muted-foreground hover:text-error transition-colors"
+          >
+            清空全部
+          </button>
+        )}
+      </div>
 
       {/* 已选项目显示 */}
       {value.length > 0 && (
@@ -402,8 +433,8 @@ function TongueMultiItemSelector({
                 type="button"
                 onClick={() =>
                   item.selected === 'other'
-                    ? handleRemoveCustom(idx)
-                    : handleRemove(item.selected)
+                    ? handleRemoveCustom()
+                    : item.selected && handleRemove(item.selected)
                 }
                 className="hover:bg-primary/20 rounded-full p-0.5"
               >
@@ -486,7 +517,7 @@ function TongueMultiItemSelector({
       {showDegree && value.length > 0 && (
         <div className="mt-2 space-y-1.5">
           {value.map((item) => {
-            if (item.selected === 'other') return null;
+            if (item.selected === 'other' || !item.selected) return null;
             const opt = options.find((o) => o.id === item.selected);
             return (
               <div key={item.selected} className="flex items-center gap-2">
@@ -496,7 +527,7 @@ function TongueMultiItemSelector({
                     <button
                       key={deg.id}
                       type="button"
-                      onClick={() => handleDegreeChange(item.selected!, deg.id)}
+                      onClick={() => handleDegreeChange(item.selected, deg.id)}
                       className={`h-5 px-1.5 rounded text-[10px] transition-colors ${
                         item.degree === deg.id
                           ? 'bg-primary/20 text-primary border border-primary/30 font-medium'
