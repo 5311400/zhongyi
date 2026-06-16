@@ -169,6 +169,75 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   // 保存状态
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
 
+  // 问诊表数据
+  const [hasInquiry, setHasInquiry] = useState(false);
+  const [applyInquiry, setApplyInquiry] = useState(false);
+
+  // 加载问诊表数据
+  const loadInquiryData = () => {
+    if (!patient) return null;
+    try {
+      const inquiries = JSON.parse(sessionStorage.getItem('inquiries') || '{}');
+      return inquiries[patient.id] || null;
+    } catch {
+      return null;
+    }
+  };
+
+  // 应用问诊表数据到表单
+  const applyInquiryToForm = (inquiry: Record<string, unknown>) => {
+    // 主诉：从 chiefComplaint 或 presentIllness
+    if (inquiry.chiefComplaint) {
+      setChiefComplaint(inquiry.chiefComplaint as string);
+    }
+    // 舌象
+    if (inquiry.tongueColor?.length || inquiry.tongueCoating?.length || inquiry.tongueBody?.length) {
+      const tongueColorMap: Record<string, string> = {
+        '淡红': '#F87171', '淡白': '#FECACA', '红': '#EF4444', '绛': '#B91C1C', '紫暗/瘀点': '#7F1D1D',
+      };
+      const tongueCoatingMap: Record<string, string> = {
+        '薄白': '#F5F5F5', '薄黄': '#FEF3C7', '厚腻': '#92400E', '黄腻': '#78350F', '少苔': '#D1D5DB', '剥苔': '#E5E7EB',
+      };
+      setTongueData({
+        color: (inquiry.tongueColor as string[])?.[0] || '',
+        colorHex: tongueColorMap[(inquiry.tongueColor as string[])?.[0] || ''] || '#F87171',
+        coating: (inquiry.tongueCoating as string[])?.[0] || '',
+        coatingHex: tongueCoatingMap[(inquiry.tongueCoating as string[])?.[0] || ''] || '#F5F5F5',
+      });
+    }
+    // 脉象
+    if (inquiry.pulse?.length) {
+      const pulseText = (inquiry.pulse as string[]).join('、');
+      setPulseData({
+        cun: pulseText,
+        guan: pulseText,
+        chi: pulseText,
+        text: pulseText,
+      });
+    }
+    // 体质
+    if (patient?.constitution) {
+      setConstitution(patient.constitution);
+    }
+    // 症状综合到主诉
+    const symptoms: string[] = [];
+    if (inquiry.coldHeat?.length) symptoms.push(`寒热：${(inquiry.coldHeat as string[]).join('、')}`);
+    if (inquiry.sweat?.length) symptoms.push(`出汗：${(inquiry.sweat as string[]).join('、')}`);
+    if (inquiry.sleep?.length) symptoms.push(`睡眠：${(inquiry.sleep as string[]).join('、')}`);
+    if (inquiry.appetite?.length) symptoms.push(`食欲：${(inquiry.appetite as string[]).join('、')}`);
+    if (symptoms.length > 0 && !chiefComplaint) {
+      setChiefComplaint(`${inquiry.chiefComplaint || '问诊记录'}\n${symptoms.join('\n')}`);
+    }
+    // 二便
+    if (inquiry.stool || inquiry.urine?.length) {
+      const bowelInfo = `大便：${inquiry.stool || '-'}`;
+      const urineInfo = `小便：${(inquiry.urine as string[])?.join('、') || '-'}`;
+      if (!summary) {
+        setSummary(`${bowelInfo}\n${urineInfo}`);
+      }
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     params.then(async ({ id }) => {
@@ -178,6 +247,9 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
         setPatient(data);
         setConstitution(data.constitution || '');
         setAllergies(data.allergies || []);
+        // 检查是否有问诊表数据
+        const inquiryData = loadInquiryData();
+        setHasInquiry(!!inquiryData);
       } else {
         router.replace('/patients');
       }
@@ -195,6 +267,41 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   }
 
   if (!patient) return null;
+
+  // 如果有问诊表数据且用户选择应用，则自动填入
+  if (hasInquiry && !applyInquiry) {
+    const inquiryData = loadInquiryData();
+    if (inquiryData) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="bg-surface rounded-xl border border-outline-variant/30 p-6 max-w-md w-full shadow-card">
+            <h2 className="text-lg font-bold mb-2">检测到问诊表数据</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              患者「{patient.name}」有一份已保存的问诊表（{new Date(inquiryData.savedAt).toLocaleDateString('zh-CN')}）。
+              是否应用问诊表数据填充病历？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  applyInquiryToForm(inquiryData);
+                  setApplyInquiry(true);
+                }}
+                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+              >
+                应用问诊表
+              </button>
+              <button
+                onClick={() => setApplyInquiry(true)}
+                className="flex-1 py-2.5 border border-outline-variant/40 text-foreground rounded-md text-sm font-medium hover:bg-surface-container"
+              >
+                跳过
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
 
   const handlePhotoUpload = (type: 'tongue' | 'face', file: File) => {
     setUploadingPhoto(true);

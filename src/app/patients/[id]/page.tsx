@@ -243,6 +243,8 @@ export default function PatientDetailPage({
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importData, setImportData] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
@@ -329,6 +331,61 @@ export default function PatientDetailPage({
 
     setIsEditing(false);
     setToast({ type: 'success', message: '资料已更新' });
+  };
+
+  // 导出病历为 JSON 文件
+  const handleExportRecords = () => {
+    if (!patient) return;
+    try {
+      const storedRecords = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
+      const patientRecords = storedRecords.filter((r: { patientId: string }) => r.patientId === patient.id);
+      const exportData = {
+        patient: patient,
+        records: patientRecords,
+        exportedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${patient.name}_病历_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setToast({ type: 'success', message: '病历已导出' });
+    } catch (e) {
+      setToast({ type: 'error', message: '导出失败' });
+    }
+  };
+
+  // 导入病历
+  const handleImportRecords = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data.records || !Array.isArray(data.records)) {
+          setToast({ type: 'error', message: '文件格式不正确' });
+          return;
+        }
+        // 合并到现有病历
+        const stored = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
+        const existingIds = new Set(stored.map((r: { id: string }) => r.id));
+        const newRecords = data.records.filter((r: { id: string }) => !existingIds.has(r.id));
+        const merged = [...stored, ...newRecords];
+        sessionStorage.setItem('medical_records', JSON.stringify(merged));
+        setToast({ type: 'success', message: `成功导入 ${newRecords.length} 条病历` });
+        // 刷新页面以显示新病历
+        window.location.reload();
+      } catch (err) {
+        setToast({ type: 'error', message: '导入失败：文件格式错误' });
+      }
+    };
+    input.click();
   };
 
   // 加载 sessionStorage 中的病历记录（按 patientId 过滤）
@@ -655,6 +712,20 @@ export default function PatientDetailPage({
                 <ClipboardList className="w-4 h-4" />
                 问诊表
               </Link>
+              <button
+                onClick={handleImportRecords}
+                className="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-md text-sm font-medium text-foreground hover:bg-surface-container/70 flex items-center gap-2 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                导入
+              </button>
+              <button
+                onClick={handleExportRecords}
+                className="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-md text-sm font-medium text-foreground hover:bg-surface-container/70 flex items-center gap-2 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                导出
+              </button>
             </div>
           </div>
 
