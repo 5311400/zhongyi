@@ -121,6 +121,12 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const [photos, setPhotos] = useState<{ id: string; type: 'tongue' | 'face'; url: string; name: string }[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // AI 辨证结果
+  const [aiResult, setAiResult] = useState<DiagnosisResult>({ loading: false, result: '' });
+
+  // 保存状态
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
+
   useEffect(() => {
     let isMounted = true;
     params.then(async ({ id }) => {
@@ -177,8 +183,6 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
     return type === 'tongue' ? '舌象' : '面相';
   };
 
-  const [aiResult, setAiResult] = useState<DiagnosisResult>({ loading: false, result: '' });
-
   // Helpers
   const toggleArr = (arr: string[], val: string, set: (v: string[]) => void) => {
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -225,7 +229,6 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const totalHerbDose = herbs.reduce((s, h) => s + (parseFloat(h.dose) || 0), 0);
 
   // 保存病历
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
   const handleSave = async () => {
     // 表单验证
     if (!chiefComplaint.trim()) {
