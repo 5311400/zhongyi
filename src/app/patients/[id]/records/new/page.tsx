@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   ChevronRight,
   Plus,
@@ -162,7 +163,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
     };
     reader.onerror = () => {
       console.error('读取文件失败');
-      alert('读取文件失败，请重试');
+      toast.error('读取文件失败，请重试');
       setUploadingPhoto(false);
     };
     reader.readAsDataURL(file);
@@ -228,21 +229,22 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const handleSave = async () => {
     // 表单验证
     if (!chiefComplaint.trim()) {
-      alert('请填写主诉');
+      toast.error('请填写主诉');
       return;
     }
     const validHerbs = herbs.filter(h => h.name.trim());
     if (validHerbs.length === 0) {
-      alert('请至少添加一味中药');
+      toast.error('请至少添加一味中药');
       return;
     }
     setSaveStatus('saving');
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('病历保存成功');
       router.push(`/patients/${patient.id}`);
     } catch (error) {
       console.error('保存失败:', error);
-      alert('保存失败，请重试');
+      toast.error('保存失败，请重试');
       setSaveStatus('idle');
     }
   };
