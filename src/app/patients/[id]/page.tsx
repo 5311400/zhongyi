@@ -25,6 +25,7 @@ import {
   X,
   UserPlus,
   AlertTriangle,
+  ClipboardList,
   CheckCircle,
 } from 'lucide-react';
 
@@ -646,6 +647,13 @@ export default function PatientDetailPage({
               >
                 <Plus className="w-4 h-4" />
                 录入新病历
+              </Link>
+              <Link
+                href={`/inquiry/${patient.id}`}
+                className="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-md text-sm font-medium text-foreground hover:bg-surface-container/70 flex items-center gap-2 transition-colors"
+              >
+                <ClipboardList className="w-4 h-4" />
+                问诊表
               </Link>
             </div>
           </div>
