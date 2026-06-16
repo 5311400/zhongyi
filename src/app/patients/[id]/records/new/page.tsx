@@ -80,6 +80,46 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 状态
+  const [chiefComplaint, setChiefComplaint] = useState('');
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [newAllergy, setNewAllergy] = useState('');
+
+  // 脉象（使用新的详细数据结构）
+  const [pulseData, setPulseData] = useState<FullPulseData>(defaultFullPulseData);
+
+  // 舌象（使用新的详细数据结构）
+  const [tongueData, setTongueData] = useState<TongueData>(defaultTongueData);
+
+  // 面色和神情（保留原有简单选择）
+  const [faceColor, setFaceColor] = useState<string[]>([]);
+  const [expression, setExpression] = useState<string[]>([]);
+
+  const [constitution, setConstitution] = useState<string>('');
+  const [syndromeLocations, setSyndromeLocations] = useState<string[]>(['肝', '脾']);
+  const [syndromeNatures, setSyndromeNatures] = useState<string[]>(['气滞', '血瘀']);
+  const [syndrome, setSyndrome] = useState('肝郁脾虚');
+
+  const [herbs, setHerbs] = useState<Herb[]>([
+    { name: '柴胡', dose: '9', unit: 'g' },
+    { name: '白芍', dose: '12', unit: 'g' },
+    { name: '当归', dose: '9', unit: 'g' },
+  ]);
+
+  // 中药搜索下拉状态
+  const [herbDropdownIdx, setHerbDropdownIdx] = useState<number | null>(null);
+  const [herbSearch, setHerbSearch] = useState('');
+
+  const [acupoints, setAcupoints] = useState<string[]>(['太冲', '足三里', '三阴交']);
+  const [newAcupoint, setNewAcupoint] = useState('');
+
+  const [treatments, setTreatments] = useState<{ name: string; duration: string }[]>([]);
+  const [summary, setSummary] = useState('');
+
+  // 照片上传
+  const [photos, setPhotos] = useState<{ id: string; type: 'tongue' | 'face'; url: string; name: string }[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     params.then(async ({ id }) => {
@@ -106,46 +146,6 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   }
 
   if (!patient) return null;
-
-  // 状态
-  const [chiefComplaint, setChiefComplaint] = useState('');
-  const [allergies, setAllergies] = useState<string[]>([]);
-  const [newAllergy, setNewAllergy] = useState('');
-
-  // 脉象（使用新的详细数据结构）
-  const [pulseData, setPulseData] = useState<FullPulseData>(defaultFullPulseData);
-  
-  // 舌象（使用新的详细数据结构）
-  const [tongueData, setTongueData] = useState<TongueData>(defaultTongueData);
-  
-  // 面色和神情（保留原有简单选择）
-  const [faceColor, setFaceColor] = useState<string[]>([]);
-  const [expression, setExpression] = useState<string[]>([]);
-
-  const [constitution, setConstitution] = useState<string>('');
-  const [syndromeLocations, setSyndromeLocations] = useState<string[]>(['肝', '脾']);
-  const [syndromeNatures, setSyndromeNatures] = useState<string[]>(['气滞', '血瘀']);
-  const [syndrome, setSyndrome] = useState('肝郁脾虚');
-
-  const [herbs, setHerbs] = useState<Herb[]>([
-    { name: '柴胡', dose: '9', unit: 'g' },
-    { name: '白芍', dose: '12', unit: 'g' },
-    { name: '当归', dose: '9', unit: 'g' },
-  ]);
-  
-  // 中药搜索下拉状态
-  const [herbDropdownIdx, setHerbDropdownIdx] = useState<number | null>(null);
-  const [herbSearch, setHerbSearch] = useState('');
-  
-  const [acupoints, setAcupoints] = useState<string[]>(['太冲', '足三里', '三阴交']);
-  const [newAcupoint, setNewAcupoint] = useState('');
-
-  const [treatments, setTreatments] = useState<{ name: string; duration: string }[]>([]);
-  const [summary, setSummary] = useState('');
-
-  // 照片上传
-  const [photos, setPhotos] = useState<{ id: string; type: 'tongue' | 'face'; url: string; name: string }[]>([]);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const handlePhotoUpload = (type: 'tongue' | 'face', file: File) => {
     setUploadingPhoto(true);
