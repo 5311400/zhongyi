@@ -28,6 +28,12 @@ export default function RootLayout({
   const isDev = process.env.COZE_PROJECT_ENV === 'DEV';
   return (
     <html lang="zh-CN">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body className="antialiased bg-background text-foreground font-sans">
         {isDev && <Inspector />}
         {children}

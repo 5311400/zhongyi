@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { AppHeader } from '@/components/app-header';
 import {
@@ -11,6 +13,7 @@ import {
   Stethoscope,
   X,
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const PATIENTS = [
   {
@@ -106,6 +109,22 @@ const CONSTITUTION_COLORS: Record<string, string> = {
 };
 
 export default function PatientsPage() {
+  const [allPatients, setAllPatients] = useState<typeof PATIENTS>(PATIENTS);
+
+  useEffect(() => {
+    // 从 sessionStorage 加载新建的患者
+    try {
+      const newPatients = JSON.parse(sessionStorage.getItem('newPatients') || '{}');
+      const newPatientList = Object.values(newPatients);
+      if (newPatientList.length > 0) {
+        // 将新建的患者添加到列表开头
+        setAllPatients([...newPatientList as typeof PATIENTS, ...PATIENTS]);
+      }
+    } catch (e) {
+      console.error('读取新建患者失败:', e);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -116,7 +135,7 @@ export default function PatientsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">患者档案</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              共 <span className="font-semibold text-foreground">{PATIENTS.length}</span> 位在管患者
+              共 <span className="font-semibold text-foreground">{allPatients.length}</span> 位在管患者
             </p>
           </div>
           <div className="flex gap-2">
@@ -152,7 +171,7 @@ export default function PatientsPage() {
         {/* Patient list */}
         <div className="bg-surface rounded-xl border border-outline-variant/30 shadow-card overflow-hidden">
           <ul className="divide-y divide-outline-variant/30">
-            {PATIENTS.map((patient) => (
+            {allPatients.map((patient) => (
               <li key={patient.id} className="hover:bg-surface-container/40 transition-colors">
                 <div className="flex items-center gap-4 p-4">
                   <Link
