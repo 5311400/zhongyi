@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
@@ -53,7 +53,9 @@ interface MedicalRecord {
   prescription: string;
   herbs: { name: string; dose: number }[];
   acupuncture?: string;
+  treatments?: { name: string; duration: string }[];
   aiSuggested: boolean;
+  createdAt?: string;
 }
 
 const PATIENTS: Record<string, Patient> = {
@@ -328,6 +330,56 @@ export default function PatientDetailPage({
     setToast({ type: 'success', message: '资料已更新' });
   };
 
+  // 加载 sessionStorage 中的病历记录（按 patientId 过滤）
+  const loadSessionRecords = (patientId: string) => {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
+      // 转换数据格式以匹配界面期望的结构
+      return stored
+        .filter((r: { id: string; patientId: string }) => r.id.startsWith('record_') && r.patientId === patientId)
+        .map((r: {
+          id: string;
+          createdAt: string;
+          chiefComplaint: string;
+          tongue: string;
+          pulse: string;
+          herbs: { name: string; dose: string }[];
+          acupoints: string[];
+          treatments: { name: string; duration: string }[];
+          recordType: string;
+        }) => ({
+          id: r.id,
+          date: new Date(r.createdAt).toLocaleDateString('zh-CN'),
+          type: r.recordType === 'new' && !r.chiefComplaint.includes('复诊') ? '初诊' as const : '复诊' as const,
+          diagnosis: r.chiefComplaint?.split('。')[0] || '诊疗记录',
+          tongue: r.tongue || '-',
+          pulse: r.pulse || '-',
+          prescription: `自定义处方 · ${r.herbs.length} 剂`,
+          herbs: r.herbs.map((h: { name: string; dose: string }) => ({
+            name: h.name,
+            dose: parseFloat(h.dose) || 0,
+          })),
+          acupuncture: r.acupoints?.join(' · ') || '',
+          treatments: r.treatments || [],
+          aiSuggested: false,
+        }));
+    } catch {
+      return [];
+    }
+  };
+
+  const records = useMemo(() => {
+    if (!patient) return [];
+    const hardcoded = RECORDS[patient.id] || [];
+    const sessionRecords = loadSessionRecords(patient.id);
+    return [...hardcoded, ...sessionRecords].sort((a, b) => {
+      const dateA = new Date(a.date || a.createdAt || 0).getTime();
+      const dateB = new Date(b.date || b.createdAt || 0).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return b.id.localeCompare(a.id);
+    });
+  }, [patient]);
+
   if (notFound) {
     return (
       <div className="min-h-screen bg-background">
@@ -367,8 +419,6 @@ export default function PatientDetailPage({
       </div>
     );
   }
-
-  const records = RECORDS[patient.id] || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -677,14 +727,16 @@ export default function PatientDetailPage({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors"
+                  aria-label="打印功能开发中"
+                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground/50 hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors cursor-not-allowed"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   打印
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors"
+                  aria-label="导出功能开发中"
+                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground/50 hover:bg-surface-container rounded-md flex items-center gap-1.5 transition-colors cursor-not-allowed"
                 >
                   <Download className="w-3.5 h-3.5" />
                   导出
@@ -772,6 +824,18 @@ export default function PatientDetailPage({
                             针灸处方
                           </div>
                           <div className="text-xs text-foreground">{record.acupuncture}</div>
+                        </div>
+                      )}
+
+                      {record.treatments && record.treatments.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-outline-variant/30">
+                          <div className="text-xs font-semibold text-foreground mb-1 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                            中医外治
+                          </div>
+                          <div className="text-xs text-foreground">
+                            {record.treatments.map((t: { name: string; duration: string }) => `${t.name}（${t.duration}）`).join('、')}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -40,6 +40,44 @@ const SYNDROME_NATURES = ['气虚', '血虚', '阴虚', '阳虚', '气滞', '血
 const COMMON_ACUPOINTS = ['太冲', '足三里', '三阴交', '期门', '合谷', '内关', '太溪', '阴陵泉', '阳陵泉', '百会', '神门', '中脘'];
 const TREATMENTS = ['普通针刺', '温针灸', '电针', '艾灸', '拔罐', '刺络放血', '推拿', '刮痧', '穴位埋线', '耳穴'];
 
+// 穴位拼音映射
+const ACUPOINT_PINYIN: Record<string, string> = {
+  '太冲': 'taichong', '足三里': 'zusanli', '三阴交': 'sanyinjiao',
+  '期门': 'qimen', '合谷': 'hegu', '内关': 'neiguan',
+  '太溪': 'taixi', '阴陵泉': 'yinlingquan', '阳陵泉': 'yanglingquan',
+  '百会': 'baihui', '神门': 'shenmen', '中脘': 'zhongwan',
+  '风池': 'fengchi', '肩井': 'jianjing', '曲池': 'quchi',
+  '列缺': 'lieque', '丰隆': 'fenglong', '公孙': 'gongsun',
+  '血海': 'xuehai', '地机': 'diji', '水道': 'shuidao',
+  '归来': 'guilai', '子宫': 'zigong', '关元': 'guanyuan',
+  '气海': 'qihai', '神阙': 'shenque', '天枢': 'tianshu',
+  '大横': 'daheng', '带脉': 'daimai', '命门': 'mingmen',
+  '肾俞': 'shenshu', '大肠俞': 'dachangshu', '肺俞': 'feishu',
+  '心俞': 'xinshu', '肝俞': 'ganshu', '脾俞': 'pishu',
+  '胃俞': 'weishu', '胆俞': 'danshu', '次髎': 'ciliao',
+  '环跳': 'huantiao', '承扶': 'chengfu', '委中': 'weizhong',
+  '承山': 'chengshan', '昆仑': 'kunlun', '照海': 'zhaohai',
+  '申脉': 'shenmai', '后溪': 'houxi', '腕骨': 'wangu',
+  '外关': 'waiguan', '支沟': 'zhigou', '翳风': 'yifeng',
+  '风市': 'fengshi', '阳交': 'yangjiao', '光明': 'guangming',
+  '悬钟': 'xuanzhong', '丘墟': 'qiuxu', '足临泣': 'zulinqi',
+  '侠溪': 'xiaxi', '太白': 'taibai', '大都': 'dadu',
+  '隐白': 'yinbai', '大敦': 'dadun', '行间': 'xingjian',
+  '蠡沟': 'ligou', '中都': 'zhongdu', '膝关': 'xiguan',
+  '阴包': 'yinbao', '曲泉': 'ququan', '中封': 'zhongfeng',
+  '急脉': 'jimai', '章门': 'zhangmen', '期门': 'qimen',
+};
+
+// 所有可用穴位（用于搜索）
+const ALL_ACUPOINTS = [
+  '太冲', '足三里', '三阴交', '期门', '合谷', '内关', '太溪', '阴陵泉', '阳陵泉', '百会', '神门', '中脘',
+  '风池', '肩井', '曲池', '列缺', '丰隆', '公孙', '血海', '地机', '水道', '归来', '子宫', '关元', '气海', '神阙', '天枢',
+  '大横', '带脉', '命门', '肾俞', '大肠俞', '肺俞', '心俞', '肝俞', '脾俞', '胃俞', '胆俞', '次髎',
+  '环跳', '承扶', '委中', '承山', '昆仑', '照海', '申脉', '后溪', '腕骨', '外关', '支沟', '翳风',
+  '风市', '阳交', '光明', '悬钟', '丘墟', '足临泣', '侠溪', '太白', '大都', '隐白', '大敦', '行间',
+  '蠡沟', '中都', '膝关', '阴包', '曲泉', '中封', '急脉', '章门',
+];
+
 type Herb = { name: string; dose: string; unit: string; specialHandling?: string };
 type DiagnosisResult = { loading: boolean; result: string };
 
@@ -107,12 +145,16 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
     { name: '当归', dose: '9', unit: 'g' },
   ]);
 
-  // 中药搜索下拉状态
+  // 中药搜索下拉状态（per-row search text）
   const [herbDropdownIdx, setHerbDropdownIdx] = useState<number | null>(null);
-  const [herbSearch, setHerbSearch] = useState('');
+  const [herbSearchByIdx, setHerbSearchByIdx] = useState<Record<number, string>>({});
+  // 键盘导航选中的下拉索引
+  const [herbSelectedIdx, setHerbSelectedIdx] = useState<number | null>(null);
 
   const [acupoints, setAcupoints] = useState<string[]>(['太冲', '足三里', '三阴交']);
   const [newAcupoint, setNewAcupoint] = useState('');
+  const [acupointDropdownOpen, setAcupointDropdownOpen] = useState(false);
+  const [acupointSelectedIdx, setAcupointSelectedIdx] = useState(0);
 
   const [treatments, setTreatments] = useState<{ name: string; duration: string }[]>([]);
   const [summary, setSummary] = useState('');
@@ -193,12 +235,6 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
       setNewAllergy('');
     }
   };
-  const addAcupoint = () => {
-    if (newAcupoint.trim() && !acupoints.includes(newAcupoint.trim())) {
-      setAcupoints([...acupoints, newAcupoint.trim()]);
-      setNewAcupoint('');
-    }
-  };
   const removeHerb = (idx: number) => setHerbs(herbs.filter((_, i) => i !== idx));
   const updateHerbField = (idx: number, field: keyof Herb, value: string) => {
     setHerbs(herbs.map((h, i) => (i === idx ? { ...h, [field]: value } : h)));
@@ -235,14 +271,36 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
       toast.error('请填写主诉');
       return;
     }
-    const validHerbs = herbs.filter(h => h.name.trim());
-    if (validHerbs.length === 0) {
+    // 清理空名称行
+    const cleanHerbs = herbs.filter(h => h.name.trim());
+    if (cleanHerbs.length === 0) {
       toast.error('请至少添加一味中药');
       return;
     }
+    setHerbs(cleanHerbs);
     setSaveStatus('saving');
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 构建病历数据
+      const record = {
+        id: `record_${Date.now()}`,
+        patientId: patient.id,
+        createdAt: new Date().toISOString(),
+        chiefComplaint,
+        tongue: formatTongueData(tongueData),
+        pulse: formatPulseData(pulseData),
+        face: { colors: faceColor, expressions: expression },
+        constitution,
+        syndrome: { location: syndromeLocations, nature: syndromeNatures, name: syndrome },
+        herbs: cleanHerbs,
+        acupoints,
+        treatments,
+        summary,
+        allergies,
+        recordType: 'new',
+      };
+      // 存储到 sessionStorage
+      const existingRecords = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
+      sessionStorage.setItem('medical_records', JSON.stringify([...existingRecords, record]));
       toast.success('病历保存成功');
       router.push(`/patients/${patient.id}`);
     } catch (error) {
@@ -342,8 +400,8 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
       <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
         {/* Patient card */}
         <div className="bg-surface rounded-xl border border-outline-variant/30 p-4 shadow-card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-primary-container text-primary flex items-center justify-center text-lg font-bold">
-            {patient.name[0]}
+          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg font-bold">
+            {patient.name?.[0] || '?'}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
@@ -636,10 +694,15 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
               </div>
             ) : (
               herbs.map((h, idx) => {
-                const filteredHerbs = COMMON_HERBS.filter(herb => 
-                  herb.name.includes(herbSearch) || 
-                  (HERB_PINYIN[herb.name]?.includes(herbSearch.toLowerCase()))
-                );
+                const searchText = herbSearchByIdx[idx] || '';
+                // 搜索为空时限制显示前8味常用药材，避免一次显示全部
+                const filteredHerbs = searchText
+                  ? COMMON_HERBS.filter(herb =>
+                      herb.name.includes(searchText) ||
+                      (HERB_PINYIN[herb.name]?.includes(searchText.toLowerCase()))
+                    )
+                  : COMMON_HERBS.slice(0, 8);
+                const showDropdown = herbDropdownIdx === idx && filteredHerbs.length > 0;
                 return (
                   <div
                     key={`${h.name}-${idx}`}
@@ -654,34 +717,67 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
                         value={h.name}
                         onChange={(e) => {
                           updateHerbField(idx, 'name', e.target.value);
-                          setHerbSearch(e.target.value);
+                          setHerbSearchByIdx(prev => ({ ...prev, [idx]: e.target.value }));
                           setHerbDropdownIdx(idx);
+                          setHerbSelectedIdx(0);
                         }}
-                        onFocus={() => setHerbDropdownIdx(idx)}
-                        onBlur={() => setTimeout(() => setHerbDropdownIdx(null), 200)}
+                        onFocus={() => {
+                          setHerbDropdownIdx(idx);
+                          // 只在已有药材名时预填搜索，否则清空避免显示全部
+                          setHerbSearchByIdx(prev => ({ ...prev, [idx]: h.name || '' }));
+                        }}
+                        onBlur={() => setTimeout(() => setHerbDropdownIdx(null), 150)}
+                        onKeyDown={(e) => {
+                          if (!showDropdown) return;
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setHerbSelectedIdx(prev => Math.min(prev + 1, filteredHerbs.length - 1));
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setHerbSelectedIdx(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const herb = filteredHerbs[herbSelectedIdx!];
+                            if (herb) {
+                              updateHerbField(idx, 'name', herb.name);
+                              updateHerbField(idx, 'dose', String(herb.dose));
+                              updateHerbField(idx, 'unit', herb.unit);
+                              if (herb.special) {
+                                setHerbs(herbs.map((x, i) =>
+                                  i === idx ? { ...x, specialHandling: herb.special } : x
+                                ));
+                              }
+                              setHerbDropdownIdx(null);
+                              setHerbSearchByIdx(prev => ({ ...prev, [idx]: '' }));
+                            }
+                          } else if (e.key === 'Tab') {
+                            setHerbDropdownIdx(null);
+                          }
+                        }}
                         placeholder="药名"
                         className="w-full h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
-                      {herbDropdownIdx === idx && filteredHerbs.length > 0 && (
+                      {showDropdown && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant/30 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
-                          {filteredHerbs.slice(0, 20).map((herb) => (
+                          {filteredHerbs.slice(0, 20).map((herb, i) => (
                             <button
                               key={herb.name}
                               type="button"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
+                              onClick={() => {
                                 updateHerbField(idx, 'name', herb.name);
                                 updateHerbField(idx, 'dose', String(herb.dose));
                                 updateHerbField(idx, 'unit', herb.unit);
                                 if (herb.special) {
-                                  setHerbs(herbs.map((x, i) => 
+                                  setHerbs(herbs.map((x, i) =>
                                     i === idx ? { ...x, specialHandling: herb.special } : x
                                   ));
                                 }
                                 setHerbDropdownIdx(null);
-                                setHerbSearch('');
+                                setHerbSearchByIdx(prev => ({ ...prev, [idx]: '' }));
                               }}
-                              className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 flex items-center justify-between"
+                              className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between ${
+                                i === herbSelectedIdx ? 'bg-primary/10' : 'hover:bg-primary/10'
+                              }`}
                             >
                               <span>{herb.name}</span>
                               <span className="text-xs text-muted-foreground">
@@ -808,17 +904,78 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
           <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={newAcupoint}
-              onChange={(e) => setNewAcupoint(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addAcupoint())}
-              placeholder="添加穴位（如：合谷）"
-              className="flex-1 h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={newAcupoint}
+                onChange={(e) => {
+                  setNewAcupoint(e.target.value);
+                  setAcupointDropdownOpen(true);
+                  setAcupointSelectedIdx(0);
+                }}
+                onKeyDown={(e) => {
+                  const filteredAcupoints = ALL_ACUPOINTS.filter(a =>
+                    a.includes(newAcupoint) ||
+                    (ACUPOINT_PINYIN[a]?.includes(newAcupoint.toLowerCase()))
+                  );
+                  if (!acupointDropdownOpen) return;
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setAcupointSelectedIdx(prev => Math.min(prev + 1, filteredAcupoints.length - 1));
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setAcupointSelectedIdx(prev => Math.max(prev - 1, 0));
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const selected = filteredAcupoints[acupointSelectedIdx];
+                    if (selected && !acupoints.includes(selected)) {
+                      setAcupoints([...acupoints, selected]);
+                    }
+                    setNewAcupoint('');
+                    setAcupointDropdownOpen(false);
+                  } else if (e.key === 'Escape') {
+                    setAcupointDropdownOpen(false);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setAcupointDropdownOpen(false), 150)}
+                onFocus={() => newAcupoint && setAcupointDropdownOpen(true)}
+                placeholder="输入穴位名称或拼音（如：合谷、hg）"
+                className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              {acupointDropdownOpen && newAcupoint && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant/30 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                  {ALL_ACUPOINTS.filter(a =>
+                    a.includes(newAcupoint) ||
+                    (ACUPOINT_PINYIN[a]?.includes(newAcupoint.toLowerCase()))
+                  ).slice(0, 15).map((a, i) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => {
+                        if (!acupoints.includes(a)) {
+                          setAcupoints([...acupoints, a]);
+                        }
+                        setNewAcupoint('');
+                        setAcupointDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-primary/10 ${
+                        i === acupointSelectedIdx ? 'bg-primary/10' : ''
+                      }`}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="button"
-              onClick={addAcupoint}
+              onClick={() => {
+                if (newAcupoint && !acupoints.includes(newAcupoint)) {
+                  setAcupoints([...acupoints, newAcupoint]);
+                  setNewAcupoint('');
+                }
+              }}
               className="px-3 h-9 bg-surface-container border border-outline-variant/30 rounded-md text-sm text-foreground hover:bg-surface-container/70"
             >
               添加
@@ -842,7 +999,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
 
         {/* Section H: 中医外治 */}
         <Section icon={Stethoscope} title="中医外治" subtitle="针灸/推拿/拔罐/艾灸等">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 mb-3">
             {TREATMENTS.map((t) => {
               const isSelected = treatments.some((x) => x.name === t);
               return (
@@ -867,6 +1024,33 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
               );
             })}
           </div>
+          {treatments.length > 0 && (
+            <div className="space-y-2 pl-2 border-l-2 border-primary/20">
+              {treatments.map((t, idx) => (
+                <div key={t.name} className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-primary min-w-[60px]">{t.name}</span>
+                  <input
+                    type="text"
+                    value={t.duration}
+                    onChange={(e) => {
+                      const updated = [...treatments];
+                      updated[idx] = { ...updated[idx], duration: e.target.value };
+                      setTreatments(updated);
+                    }}
+                    placeholder="持续时间/细节（如：15分钟、力度适中）"
+                    className="flex-1 h-8 px-2 bg-surface border border-outline-variant/30 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setTreatments(treatments.filter((x) => x.name !== t.name))}
+                    className="p-1 hover:bg-error/10 text-muted-foreground hover:text-error rounded"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
 
         {/* Section I: 病例摘要 */}

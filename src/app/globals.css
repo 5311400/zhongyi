@@ -30,6 +30,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-outline-variant: var(--outline-variant);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -39,10 +40,13 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-surface-container: var(--surface-container);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -84,12 +88,15 @@
   /* === 卡片/表面 === */
   --card: oklch(1 0 0);                    /* #FFFFFF 纯白卡片，靠阴影浮起 */
   --card-foreground: oklch(0.21 0.006 285);
+  --surface: oklch(1 0 0);                  /* #FFFFFF 表面色（用于模态框等） */
+  --surface-container: oklch(0.97 0.005 80); /* #F7F6F3 容器色 */
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.006 285);
 
   /* === 主色：翠绿（中医药材色） === */
   --primary: oklch(0.596 0.145 163);       /* #059669 emerald-600 */
   --primary-foreground: oklch(1 0 0);      /* #FFFFFF 主色上的文字 */
+  --primary-container: oklch(0.92 0.06 163); /* 淡翠绿，用于头像背景等 */
 
   /* === 次要/容器/输入框背景 === */
   --secondary: oklch(0.95 0.008 80);       /* #F1EFEC 米灰 */
@@ -112,6 +119,7 @@
 
   /* === 边框/输入框/聚焦环 === */
   --border: oklch(0.92 0.004 286);         /* #E4E4E7 边框 */
+  --outline-variant: oklch(0.88 0.006 286); /* #D4D4D8 次边框 */
   --input: oklch(0.92 0.004 286);
   --ring: oklch(0.596 0.145 163);          /* 主色聚焦环 */
 
@@ -131,6 +139,48 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285);
   --sidebar-border: oklch(0.92 0.004 286);
   --sidebar-ring: oklch(0.596 0.145 163);
+}
+
+/* 暗色模式 */
+.dark {
+  --background: oklch(0.15 0.01 80);
+  --foreground: oklch(0.95 0.01 80);
+  --card: oklch(0.20 0.01 80);
+  --card-foreground: oklch(0.95 0.01 80);
+  --surface: oklch(0.20 0.01 80);
+  --surface-container: oklch(0.17 0.01 80);
+  --popover: oklch(0.20 0.01 80);
+  --popover-foreground: oklch(0.95 0.01 80);
+  --primary: oklch(0.70 0.15 163);
+  --primary-foreground: oklch(0.15 0.01 80);
+  --primary-container: oklch(0.30 0.08 163);
+  --secondary: oklch(0.25 0.01 80);
+  --secondary-foreground: oklch(0.95 0.01 80);
+  --muted: oklch(0.25 0.01 80);
+  --muted-foreground: oklch(0.65 0.01 80);
+  --accent: oklch(0.25 0.01 80);
+  --accent-foreground: oklch(0.95 0.01 80);
+  --destructive: oklch(0.65 0.22 25);
+  --error: oklch(0.65 0.22 25);
+  --error-foreground: oklch(0.98 0.01 80);
+  --success: oklch(0.70 0.18 150);
+  --success-foreground: oklch(0.15 0.01 80);
+  --warning: oklch(0.75 0.18 70);
+  --warning-foreground: oklch(0.15 0.01 80);
+  --info: oklch(0.65 0.18 260);
+  --info-foreground: oklch(0.98 0.01 80);
+  --border: oklch(0.30 0.01 80);
+  --outline-variant: oklch(0.35 0.01 80);
+  --input: oklch(0.30 0.01 80);
+  --ring: oklch(0.70 0.15 163);
+  --sidebar: oklch(0.18 0.01 80);
+  --sidebar-foreground: oklch(0.95 0.01 80);
+  --sidebar-primary: oklch(0.70 0.15 163);
+  --sidebar-primary-foreground: oklch(0.15 0.01 80);
+  --sidebar-accent: oklch(0.25 0.01 80);
+  --sidebar-accent-foreground: oklch(0.95 0.01 80);
+  --sidebar-border: oklch(0.30 0.01 80);
+  --sidebar-ring: oklch(0.70 0.15 163);
 }
 
 @layer base {
