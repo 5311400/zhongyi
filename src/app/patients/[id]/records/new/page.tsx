@@ -171,7 +171,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
 
   // 问诊表数据
   const [hasInquiry, setHasInquiry] = useState(false);
-  const [applyInquiry, setApplyInquiry] = useState(false);
+  const [hasAppliedInquiry, setHasAppliedInquiry] = useState(false);
 
   // 加载问诊表数据（按 patientId 查询，不依赖闭包中的 patient）
   const loadInquiryDataById = (patientId: string) => {
@@ -288,7 +288,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   if (!patient) return null;
 
   // 如果有问诊表数据且用户选择应用，则自动填入
-  if (hasInquiry && !applyInquiry) {
+  if (hasInquiry && !hasAppliedInquiry) {
     const inquiryData = loadInquiryDataById(patient.id);
     if (inquiryData) {
       return (
@@ -303,14 +303,18 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
               <button
                 onClick={() => {
                   applyInquiryToForm(inquiryData);
-                  setApplyInquiry(true);
+                  setHasAppliedInquiry(true);
+                  setHasInquiry(false); // 应用后清除，避免再次提示
                 }}
                 className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
               >
                 应用问诊表
               </button>
               <button
-                onClick={() => setApplyInquiry(true)}
+                onClick={() => {
+                  setHasAppliedInquiry(true);
+                  setHasInquiry(false); // 跳过后也清除，避免再次提示
+                }}
                 className="flex-1 py-2.5 border border-outline-variant/40 text-foreground rounded-md text-sm font-medium hover:bg-surface-container"
               >
                 跳过
