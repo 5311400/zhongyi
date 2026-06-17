@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.6
+-- 版本：v0.6.7
 
 -- ============================================
 -- 1. 启用 RLS
@@ -285,6 +285,12 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Audit logs select for self" ON audit_logs;
 DROP POLICY IF EXISTS "Audit logs admin select" ON audit_logs;
+DROP POLICY IF EXISTS "Audit logs insert for authenticated" ON audit_logs;
+
+-- 允许经过认证的用户插入审计日志（触发器自动设置 user_id）
+CREATE POLICY "Audit logs insert for authenticated"
+  ON audit_logs
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- 用户只能查看自己操作的审计日志
 CREATE POLICY "Audit logs select for self"

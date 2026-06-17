@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.7] - 2026-06-17
+
+### 安全修复（高危）
+
+**审计日志 INSERT 策略修复：**
+- 修复 audit_logs 表缺少 INSERT 策略的致命错误
+- 未修复前所有表写入操作会因审计触发器失败而回滚
+- 添加 `Audit logs insert for authenticated` 策略，仅允许已认证用户插入
+
 ## [0.6.6] - 2026-06-17
 
 ### 优化
