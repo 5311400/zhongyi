@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-06-17
+
+### Security
+
+- 修复 RLS 策略中的严重问题
+  - 使用 `COALESCE(current_setting('app.current_clinic_id', true)::uuid, ...)` 避免 NULL 值
+  - 诊所表添加专门的 INSERT 策略，允许认证用户创建诊所
+  - 移除不兼容的 `ALTER DATABASE` 和 `ALTER SYSTEM` 语句
+  - 视图添加 fallback 处理，避免未设置上下文时报错
+  - 添加 `set_clinic_context` 辅助函数
+  - 添加 `idx_clinic_members_user_id` 索引
+
+- 优化安全配置指南
+  - 移除不兼容的审计日志配置，改用 Supabase pgAudit 扩展
+  - 添加 `app.current_clinic_id` 设置说明和示例代码
+  - 修正数据库角色管理方案，使用 `user_roles` 表
+  - 添加敏感字段解密权限控制说明
+  - 添加 GDPR/HIPAA 合规免责声明
+  - 优化备份策略描述（PITR + 每日全量备份）
+  - 改进 `maskPhone` 函数，支持 8-15 位国际号码
+  - 添加 API 限流配置示例
+  - 添加 CORS 白名单配置
+  - 添加环境变量管理和密钥轮换机制
+  - 细化安全事件分级（P0-P3）
+  - 添加安全测试清单
+
+### Fixed
+
+- RLS 策略：移除可能导致查询失败的 `current_setting` 无 fallback 调用
+- RLS 策略：修复诊所表无法创建第一条记录的问题
+- RLS 策略：移除 Supabase 不支持的 `ALTER SYSTEM` 语句
+- 安全指南：修正文件路径（`src/lib/supabase.ts` → `src/storage/database/supabase-client.ts`）
+
 ## [0.6.0] - 2026-06-17
 
 ### Security
