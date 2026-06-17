@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>中医问诊病情表</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 30px 25px 40px 25px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            color: #2c3e4f;
+            margin-top: 0;
+            border-bottom: 2px solid #c9e0e8;
+            padding-bottom: 12px;
+        }
+        .sub {
+            text-align: center;
+            color: #5f7f6e;
+            font-size: 14px;
+            margin-top: -8px;
+            margin-bottom: 25px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 15px;
+        }
+        .form-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        .form-field label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            color: #1e4663;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #bacad6;
+            border-radius: 12px;
+            font-size: 14px;
+            background-color: #fefefe;
+            transition: 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #3b8c6e;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59,140,110,0.2);
+        }
+        .section-title {
+            background: #eef4f0;
+            padding: 8px 16px;
+            margin: 25px 0 15px 0;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f4e3c;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .checkbox-group label {
+            font-weight: normal;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f8fafc;
+            padding: 4px 12px;
+            border-radius: 25px;
+            border: 1px solid #d4e0e6;
+        }
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            vertical-align: top;
+            text-align: left;
+        }
+        th {
+            background-color: #e9f0f3;
+            font-weight: 600;
+        }
+        .remark {
+            background: #fff9e8;
+            padding: 12px 20px;
+            border-radius: 16px;
+            margin-top: 30px;
+            font-size: 13px;
+            color: #7a6a3a;
+            border-left: 4px solid #e2c45e;
+        }
+        .print-btn {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        button {
+            background-color: #2f6b55;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            font-size: 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #1f5542;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 10px;
+            }
+            .print-btn {
+                display: none;
+            }
+            .checkbox-group label {
+                border: none;
+                background: none;
+                padding: 0 8px 0 0;
+            }
+            input, textarea, select {
+                border: 1px solid #aaa;
+                background: white;
+            }
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #8aa0ae;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📋 中医问诊病情表</h1>
+    <div class="sub">（基于十问歌辨证设计 · 可打印填写）</div>
+
+    <div class="print-btn">
+        <button onclick="window.print()">🖨️ 打印 / 保存为PDF / Word</button>
+    </div>
+
+    <!-- 基本信息 -->
+    <div class="form-row">
+        <div class="form-field"><label>填写日期</label><input type="text" placeholder="2026年 月 日"></div>
+        <div class="form-field"><label>姓名</label><input type="text" placeholder=""></div>
+        <div class="form-field"><label>性别</label><select><option>男</option><option>女</option></select></div>
+        <div class="form-field"><label>年龄</label><input type="text" placeholder="岁"></div>
+        <div class="form-field"><label>职业</label><input type="text" placeholder=""></div>
+    </div>
+    <div class="form-row">
+        <div class="form-field"><label>身高(cm)</label><input type="text"></div>
+        <div class="form-field"><label>体重(kg)</label><input type="text"></div>
+        <div class="form-field"><label>既往病史</label><input type="text" placeholder="高血压/糖尿病等"></div>
+        <div class="form-field"><label>过敏史</label><input type="text" placeholder="药物/食物"></div>
+    </div>
+
+    <!-- 主诉 -->
+    <div class="section-title">1. 主诉（最想解决的问题）</div>
+    <textarea rows="2" placeholder="例：头痛3天，加重1天" style="width:100%"></textarea>
+
+    <div class="section-title">2. 现病史</div>
+    <textarea rows="3" placeholder="何时开始？有何诱因（着凉、生气、熬夜、饮食等）？变化过程？是否用药？"></textarea>
+
+    <div class="section-title">3. 全身与脏腑分项</div>
+
+    <!-- 寒热汗 -->
+    <div class="grid-2col">
+        <div><strong>🌡️ 寒热</strong><div class="checkbox-group"><label><input type="checkbox"> 怕冷</label><label><input type="checkbox"> 怕热</label><label><input type="checkbox"> 怕风</label><label><input type="checkbox"> 寒热都有</label></div>手脚：<label><input type="checkbox"> 手足心热</label> <label><input type="checkbox"> 手脚冰凉</label></div>
+        <div><strong>💧 汗出</strong><div class="checkbox-group"><label><input type="checkbox"> 正常</label><label><input type="checkbox"> 白天易汗</label><label><input type="checkbox"> 夜间盗汗</label><label><input type="checkbox"> 不出汗</label></div>汗出部位：<input type="text" placeholder="头颈/手心/后背等"></div>
+    </div>
+
+    <div class="grid-2col">
+        <div><strong>🧠 头身</strong><div class="checkbox-group"><label><input type="checkbox"> 头痛</label><label><input type="checkbox"> 头晕</label><label><input type="checkbox"> 头重</label></div>身体：<label><input type="checkbox"> 沉重</label> <label><input type="checkbox"> 关节痛(部位: </label><input type="text" style="width:80px" placeholder="膝/腰">) <label><input type="checkbox"> 肌肉酸</label> <label><input type="checkbox"> 四肢麻木</label></div>
+        <div><strong>💩 二便</strong>大便：<select><option>正常</option><option>便秘(___天一次)</option><option>腹泻(次/天)</option><option>不成形</option><option>黏马桶</option><option>干结</option></select><br>小便：<select><option>正常</option><option>色黄</option><option>色清</option><option>尿频</option><option>夜尿(次/晚)</option><option>不畅</option></select></div>
+    </div>
+
+    <div class="grid-2col">
+        <div><strong>🍚 饮食口味</strong><br>食欲：<label><input type="checkbox"> 好</label> <label><input type="checkbox"> 一般</label> <label><input type="checkbox"> 差</label> <label><input type="checkbox"> 易饿</label> <label><input type="checkbox"> 厌油腻</label><br>口渴：<label><input type="checkbox"> 多饮</label> <label><input type="checkbox"> 渴不想喝</label> 喜：<label><input type="checkbox"> 热水</label> <label><input type="checkbox"> 凉水</label><br>口味：<label><input type="checkbox"> 口苦</label> <label><input type="checkbox"> 口黏</label> <label><input type="checkbox"> 口淡</label> <label><input type="checkbox"> 口甜</label> <label><input type="checkbox"> 口酸</label></div>
+        <div><strong>❤️ 胸腹</strong><div class="checkbox-group"><label><input type="checkbox"> 胸闷</label><label><input type="checkbox"> 心悸</label><label><input type="checkbox"> 胁肋胀</label><label><input type="checkbox"> 腹胀</label><label><input type="checkbox"> 腹痛</label></div>按压：<label><input type="checkbox"> 舒服</label> <label><input type="checkbox"> 加重</label> 肠鸣：<label><input type="checkbox"> 有</label></div>
+    </div>
+
+    <div class="grid-2col">
+        <div><strong>😴 睡眠</strong><div class="checkbox-group"><label><input type="checkbox"> 入睡困难</label><label><input type="checkbox"> 多梦</label><label><input type="checkbox"> 易醒</label><label><input type="checkbox"> 早醒</label><label><input type="checkbox"> 嗜睡</label></div>每晚睡约___小时</div>
+        <div><strong>🎭 情志</strong><div class="checkbox-group"><label><input type="checkbox"> 急躁易怒</label><label><input type="checkbox"> 焦虑</label><label><input type="checkbox"> 忧郁</label><label><input type="checkbox"> 思虑多</label><label><input type="checkbox"> 易惊</label></div></div>
+    </div>
+
+    <!-- 妇女小儿专用 -->
+    <div><strong>👩 妇女（若无忽略）</strong> 月经周期___天 / 经期___天 / 末次___月___日<br>
+        <div class="checkbox-group"><label><input type="checkbox"> 痛经</label><label><input type="checkbox"> 血块</label><label><input type="checkbox"> 量多</label><label><input type="checkbox"> 量少</label><label><input type="checkbox"> 色淡</label><label><input type="checkbox"> 色暗</label><label><input type="checkbox"> 闭经</label></div>
+        带下：<label><input type="checkbox"> 量多</label> <label><input type="checkbox"> 色黄</label> <label><input type="checkbox"> 色白</label> <label><input type="checkbox"> 清稀</label> <label><input type="checkbox"> 异味</label>
+    </div>
+
+    <div><strong>🧸 小儿（若适用）</strong> <input type="text" placeholder="喂养/发育/接种等特殊情况" style="width:70%"></div>
+
+    <!-- 舌脉 (医师填写) -->
+    <div class="section-title">4. 舌象与脉象（医师填写）</div>
+    <table>
+        <tr><th style="width:30%">舌象</th><td>舌色：<label><input type="checkbox"> 淡红</label> <label><input type="checkbox"> 淡白</label> <label><input type="checkbox"> 红</label> <label><input type="checkbox"> 绛</label> <label><input type="checkbox"> 紫暗/瘀点</label><br>
+        舌苔：<label><input type="checkbox"> 薄白</label> <label><input type="checkbox"> 薄黄</label> <label><input type="checkbox"> 厚腻</label> <label><input type="checkbox"> 黄腻</label> <label><input type="checkbox"> 少苔</label> <label><input type="checkbox"> 剥苔</label><br>
+        舌体：<label><input type="checkbox"> 胖大</label> <label><input type="checkbox"> 齿痕</label> <label><input type="checkbox"> 裂纹</label> <label><input type="checkbox"> 歪斜</label>
+        </td></tr>
+        <tr><th>脉象</th><td><label><input type="checkbox"> 浮</label> <label><input type="checkbox"> 沉</label> <label><input type="checkbox"> 迟</label> <label><input type="checkbox"> 数</label> <label><input type="checkbox"> 滑</label> <label><input type="checkbox"> 涩</label> <label><input type="checkbox"> 弦</label> <label><input type="checkbox"> 细</label> <label><input type="checkbox"> 弱</label> 其他描述：<input type="text" style="width:250px"></td></tr>
+    </table>
+
+    <div class="section-title">5. 辨证结论（医师专用）</div>
+    <div class="grid-2col">
+        <div><strong>辨证结论</strong><br><input type="text" placeholder="例：肝郁脾虚证 / 风寒束表证"></div>
+        <div><strong>病位</strong><br><label><input type="checkbox"> 表</label> <label><input type="checkbox"> 里</label> <label><input type="checkbox"> 半表半里</label> 脏腑：<input type="text" placeholder="心/肝/脾/肺/肾"></div>
+        <div><strong>病性</strong><br><label><input type="checkbox"> 寒</label> <label><input type="checkbox"> 热</label> <label><input type="checkbox"> 虚</label> <label><input type="checkbox"> 实</label> <label><input type="checkbox"> 气滞</label> <label><input type="checkbox"> 血瘀</label> <label><input type="checkbox"> 痰湿</label></div>
+        <div><strong>治则治法</strong><br><input type="text" placeholder="疏肝健脾 / 解表散寒等"></div>
+    </div>
+
+    <div class="remark">
+        📌 说明：患者填写第1-3部分；舌脉及辨证由中医师面诊完成。本表格可用于初诊建档、远程咨询参考。打印后可手填，也可直接在电脑上勾选保存。
+    </div>
+    <footer>中医问诊参考表 | 结合十问歌及临床辨证思路</footer>
+</div>
+</body>
+</html>

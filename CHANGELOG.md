@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-06-17
+
+### 安全修复（高危）
+
+**RLS 策略修复：**
+- 移除所有 COALESCE fallback，强制要求设置 `app.current_clinic_id` 上下文，防止数据泄露
+- 修复诊所成员表插入策略：使用 AND 限制，禁止用户将自己添加到任意诊所
+- 移除 `SECURITY DEFINER`，改用默认的 `SECURITY INVOKER`，防止权限提升
+- 为 clinics 表添加 DELETE 策略（需同时满足诊所 ID 和所有者角色）
+- 添加 user_roles 表的 RLS 策略（查看自己、管理员管理）
+- 视图移除 COALESCE fallback，与 RLS 策略保持一致
+
+**安全指南优化：**
+- CORS 配置改为在 middleware.ts 中处理，支持多域名
+- 添加安全标头配置（X-Frame-Options、X-Content-Type-Options 等）
+- 敏感数据解密函数添加 RLS 二次验证
+- 审计日志使用枚举类型（AuditAction、ResourceType）
+- 安全事件分级响应时间调整为更现实的值（符合 GDPR 72 小时要求）
+- 添加数据库连接池配置建议
+- 添加 SQL 注入防护说明
+- 添加数据脱敏规则表
+- 添加数据最小化原则
+- 安全测试清单添加渗透测试预算说明
+
+### 优化
+
+- 所有 DROP POLICY 语句添加 IF EXISTS，避免重复执行报错
+
 ## [0.6.1] - 2026-06-17
 
 ### Security

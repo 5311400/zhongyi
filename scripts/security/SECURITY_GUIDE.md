@@ -75,21 +75,41 @@ export async function middleware(request: NextRequest) {
 ### 1.4 CORS 配置
 
 ```typescript
-// next.config.ts
-module.exports = {
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: 'https://yourdomain.com' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ],
-      },
-    ];
-  },
-};
+// src/middleware.ts - 推荐方式
+const allowedOrigins = [
+  'https://yourdomain.com',
+  'https://staging.yourdomain.com',
+  process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '',
+].filter(Boolean);
+
+export function middleware(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const response = NextResponse.next();
+
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+
+  return response;
+}
+```
+
+### 1.5 安全标头
+
+```typescript
+// src/middleware.ts
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  return response;
+}
 ```
 
 ## 二、数据安全
@@ -109,6 +129,8 @@ module.exports = {
 \i scripts/security/rls-policies.sql
 ```
 
+**重要**：所有 RLS 策略强制要求设置 `app.current_clinic_id` 上下文，未设置将返回空结果，防止数据泄露。
+
 ### 2.3 敏感数据处理
 
 ```typescript
@@ -121,9 +143,9 @@ function maskSensitiveData(patient: Patient): Patient {
   };
 }
 
+// 手机号脱敏（兼容 8-15 位国际号码）
 function maskPhone(phone: string): string {
   if (!phone) return '';
-  // 兼容 8-15 位号码（国际号码）
   const len = phone.length;
   if (len <= 8) return phone;
   const showFirst = Math.min(3, Math.floor(len / 4));
@@ -132,19 +154,54 @@ function maskPhone(phone: string): string {
   return phone.substring(0, showFirst) + '*'.repeat(maskedLen) + phone.substring(len - showLast);
 }
 
+// 身份证号脱敏
 function maskIdNumber(id: string): string {
   if (!id) return '';
   return id.replace(/(\d{6})\d{8}(\d{4})/, '$1********$2');
 }
 
-// 解密处理（仅在授权后）
-function decryptPatientData(encryptedData: string, userId: string, resourceId: string): Patient {
-  // 先验证用户是否有权访问
-  if (!hasAccess(userId, resourceId)) {
-    throw new Error('Unauthorized');
+// 解密处理（依赖 RLS 二次验证）
+async function decryptPatientData(
+  encryptedData: string,
+  userId: string,
+  resourceId: string
+): Promise<Patient> {
+  // 1. 先通过 Supabase 查询验证权限（RLS 自动过滤）
+  const { data, error } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('id', resourceId)
+    .single();
+
+  if (error || !data) {
+    throw new Error('Access denied');
   }
+
+  // 2. 解密数据
   return decrypt(encryptedData);
 }
+```
+
+### 2.4 数据脱敏规则表
+
+| 字段 | 脱敏规则 | 示例 |
+|------|----------|------|
+| 姓名 | 保留姓，名用*代替 | 张** |
+| 手机号 | 保留前3后4位 | 138****5678 |
+| 身份证号 | 保留前6后4位 | 110105********1234 |
+| 地址 | 保留街道，门牌号隐藏 | 朝阳区*路号 |
+
+### 2.5 SQL 注入防护
+
+```typescript
+// 使用 Supabase 的查询构建器（自动防 SQL 注入）
+const { data } = await supabase
+  .from('patients')
+  .select('*')
+  .eq('id', patientId); // 参数化查询
+
+// 避免使用原始 SQL 拼接
+// const query = `SELECT * FROM patients WHERE id = '${patientId}'`; // 危险！
 ```
 
 ## 三、合规性
@@ -186,12 +243,18 @@ CREATE EXTENSION IF NOT EXISTS pgaudit;
 ### 4.2 应用级别
 
 ```typescript
+// 审计操作类型枚举
+type AuditAction = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'EXPORT' | 'IMPORT';
+
+// 资源类型枚举
+type ResourceType = 'PATIENT' | 'RECORD' | 'PRESCRIPTION' | 'TREATMENT' | 'USER' | 'CLINIC';
+
 // 创建审计日志记录
 interface AuditLog {
   id: string;
   userId: string;
-  action: string;
-  resourceType: string;
+  action: AuditAction;
+  resourceType: ResourceType;
   resourceId: string;
   timestamp: Date;
   ipAddress: string;
@@ -200,8 +263,8 @@ interface AuditLog {
 
 async function logAudit(
   userId: string,
-  action: string,
-  resourceType: string,
+  action: AuditAction,
+  resourceType: ResourceType,
   resourceId: string,
   details: Record<string, unknown> = {}
 ) {
@@ -282,6 +345,23 @@ export class EncryptionService {
 }
 ```
 
+### 7.3 数据库连接池配置
+
+```typescript
+// src/lib/supabase.ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(url, key, {
+  auth: { /* ... */ },
+  db: {
+    pool: {
+      min: 2,
+      max: 20,
+    },
+  },
+});
+```
+
 ## 八、安全检查清单
 
 - [ ] 所有表启用 RLS
@@ -290,6 +370,7 @@ export class EncryptionService {
 - [ ] pgAudit 扩展启用
 - [ ] API 限流配置
 - [ ] CORS 白名单配置
+- [ ] 安全标头配置
 - [ ] 环境变量加密管理
 - [ ] 定期安全审计（每年至少 2 次）
 - [ ] 定期备份验证（每月）
@@ -303,20 +384,22 @@ export class EncryptionService {
 ### 9.1 数据泄露处理流程
 
 1. **检测**：监控系统发现异常
-2. **评估**：确定泄露范围和影响（15 分钟内）
-3. **遏制**：暂停受影响服务（30 分钟内）
-4. **通知**：按法规要求通知相关方（24 小时内）
+2. **评估**：确定泄露范围和影响（1 小时内）
+3. **遏制**：暂停受影响服务（4 小时内）
+4. **通知**：按法规要求通知相关方（72 小时内）
 5. **恢复**：修复漏洞，恢复服务
 6. **调查**：分析原因，完善安全措施
 
 ### 9.2 安全事件分级
 
-| 级别 | 定义 | 响应时间 | 通知对象 |
+| 级别 | 定义 | 响应时间 | 通知时间 |
 |------|------|----------|----------|
-| P0 | 数据泄露/系统入侵 | 立即（15 分钟内） | CEO + CTO + 法务 |
-| P1 | 服务中断/数据丢失 | 1 小时内 | CTO + 运维 |
-| P2 | 安全漏洞发现 | 24 小时内 | 安全团队 |
-| P3 | 安全配置问题 | 72 小时内 | 开发团队 |
+| P0 | 数据泄露/系统入侵 | 1 小时内 | 72 小时内（GDPR 要求） |
+| P1 | 服务中断/数据丢失 | 4 小时内 | 24 小时内 |
+| P2 | 安全漏洞发现 | 24 小时内 | - |
+| P3 | 安全配置问题 | 72 小时内 | - |
+
+**说明**：P0 的 72 小时通知期限符合 GDPR 第 33 条要求。
 
 ## 附录
 
@@ -328,29 +411,33 @@ export class EncryptionService {
 -- 用户角色表
 CREATE TABLE user_roles (
   user_id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'auditor', 'user')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'auditor', 'user', 'owner')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- RLS 策略中使用角色
-CREATE POLICY "Admin full access" ON patients
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+-- RLS 策略已在 rls-policies.sql 中定义
 ```
+
+**user_roles 表 RLS 策略：**
+- 用户只能查看自己的角色
+- 管理员可以管理所有角色
 
 ### B. 安全测试清单
 
-- [ ] 渗透测试（每年至少 2 次）
+- [ ] 渗透测试（每年至少 2 次，建议委托专业安全公司，预留预算 5-10 万元/年）
 - [ ] 漏洞扫描（每月）
 - [ ] 代码安全审计（每次发布前）
 - [ ] 依赖项安全扫描（每周）
 - [ ] 社会工程学测试（每年）
 - [ ] 安全应急演练（每季度）
 
-### C. 常见安全事件处理
+### C. 数据最小化原则
+
+- 只收集必要的患者信息
+- 不存储不需要的敏感数据
+- 定期清理过期数据
+
+### D. 常见安全事件处理
 
 **场景 1：用户忘记密码**
 - 使用 Supabase Auth 的密码重置功能
@@ -364,6 +451,6 @@ CREATE POLICY "Admin full access" ON patients
 
 **场景 3：数据泄露**
 - 立即隔离受影响系统
-- 通知所有受影响用户
+- 通知所有受影响用户（72 小时内）
 - 配合监管机构调查
 - 实施补救措施

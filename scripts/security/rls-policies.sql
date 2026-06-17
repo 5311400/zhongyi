@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.1
+-- 版本：v0.6.2
 
 -- ============================================
 -- 1. 启用 RLS
@@ -14,6 +14,7 @@ ALTER TABLE medical_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prescription_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE treatment_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tcm_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- 2. 诊所表策略（特殊处理）
@@ -21,12 +22,16 @@ ALTER TABLE tcm_options ENABLE ROW LEVEL SECURITY;
 
 -- 移除可能存在的旧策略
 DROP POLICY IF EXISTS "Clinic data isolation" ON clinics;
+DROP POLICY IF EXISTS "Clinics select for member" ON clinics;
+DROP POLICY IF EXISTS "Clinics insert for authenticated" ON clinics;
+DROP POLICY IF EXISTS "Clinics update for owner" ON clinics;
+DROP POLICY IF EXISTS "Clinics delete for owner" ON clinics;
 
--- 用户只能查看自己的诊所（通过 session 变量）
+-- 用户只能查看自己的诊所（强制要求设置上下文，无 fallback）
 CREATE POLICY "Clinics select for member"
   ON clinics
   FOR SELECT USING (
-    id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, id)
+    id = current_setting('app.current_clinic_id')::uuid
   );
 
 -- 认证用户可以创建诊所
@@ -41,31 +46,50 @@ CREATE POLICY "Clinics update for owner"
     id = current_setting('app.current_clinic_id')::uuid
   );
 
+-- 允许诊所所有者删除诊所
+CREATE POLICY "Clinics delete for owner"
+  ON clinics
+  FOR DELETE USING (
+    id = current_setting('app.current_clinic_id')::uuid
+    AND EXISTS (
+      SELECT 1 FROM clinic_members
+      WHERE clinic_id = id AND user_id = auth.uid() AND role = 'owner'
+    )
+  );
+
 -- ============================================
 -- 3. 诊所成员表策略
 -- ============================================
 
 DROP POLICY IF EXISTS "Clinic members isolation" ON clinic_members;
+DROP POLICY IF EXISTS "Clinic members select" ON clinic_members;
+DROP POLICY IF EXISTS "Clinic members insert" ON clinic_members;
+DROP POLICY IF EXISTS "Clinic members update" ON clinic_members;
+DROP POLICY IF EXISTS "Clinic members delete" ON clinic_members;
 
+-- 用户只能查看自己诊所的成员
 CREATE POLICY "Clinic members select"
   ON clinic_members
   FOR SELECT USING (
-    clinic_id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, clinic_id)
+    clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
+-- 用户只能将自己添加到当前诊所（AND 限制）
 CREATE POLICY "Clinic members insert"
   ON clinic_members
   FOR INSERT WITH CHECK (
     auth.uid() = user_id
-    OR clinic_id = current_setting('app.current_clinic_id', true)::uuid
+    AND clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
+-- 用户只能更新自己诊所的成员
 CREATE POLICY "Clinic members update"
   ON clinic_members
   FOR UPDATE USING (
     clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
+-- 用户只能删除自己诊所的成员
 CREATE POLICY "Clinic members delete"
   ON clinic_members
   FOR DELETE USING (
@@ -80,11 +104,15 @@ DROP POLICY IF EXISTS "Patients isolation by clinic" ON patients;
 DROP POLICY IF EXISTS "Patients insert for clinic" ON patients;
 DROP POLICY IF EXISTS "Patients update for clinic" ON patients;
 DROP POLICY IF EXISTS "Patients delete for clinic" ON patients;
+DROP POLICY IF EXISTS "Patients select" ON patients;
+DROP POLICY IF EXISTS "Patients insert" ON patients;
+DROP POLICY IF EXISTS "Patients update" ON patients;
+DROP POLICY IF EXISTS "Patients delete" ON patients;
 
 CREATE POLICY "Patients select"
   ON patients
   FOR SELECT USING (
-    clinic_id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, clinic_id)
+    clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
 CREATE POLICY "Patients insert"
@@ -113,11 +141,15 @@ DROP POLICY IF EXISTS "Medical records isolation by clinic" ON medical_records;
 DROP POLICY IF EXISTS "Medical records insert for clinic" ON medical_records;
 DROP POLICY IF EXISTS "Medical records update for clinic" ON medical_records;
 DROP POLICY IF EXISTS "Medical records delete for clinic" ON medical_records;
+DROP POLICY IF EXISTS "Medical records select" ON medical_records;
+DROP POLICY IF EXISTS "Medical records insert" ON medical_records;
+DROP POLICY IF EXISTS "Medical records update" ON medical_records;
+DROP POLICY IF EXISTS "Medical records delete" ON medical_records;
 
 CREATE POLICY "Medical records select"
   ON medical_records
   FOR SELECT USING (
-    clinic_id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, clinic_id)
+    clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
 CREATE POLICY "Medical records insert"
@@ -146,11 +178,15 @@ DROP POLICY IF EXISTS "Prescription items isolation by clinic" ON prescription_i
 DROP POLICY IF EXISTS "Prescription items insert for clinic" ON prescription_items;
 DROP POLICY IF EXISTS "Prescription items update for clinic" ON prescription_items;
 DROP POLICY IF EXISTS "Prescription items delete for clinic" ON prescription_items;
+DROP POLICY IF EXISTS "Prescription items select" ON prescription_items;
+DROP POLICY IF EXISTS "Prescription items insert" ON prescription_items;
+DROP POLICY IF EXISTS "Prescription items update" ON prescription_items;
+DROP POLICY IF EXISTS "Prescription items delete" ON prescription_items;
 
 CREATE POLICY "Prescription items select"
   ON prescription_items
   FOR SELECT USING (
-    clinic_id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, clinic_id)
+    clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
 CREATE POLICY "Prescription items insert"
@@ -179,11 +215,15 @@ DROP POLICY IF EXISTS "Treatment items isolation by clinic" ON treatment_items;
 DROP POLICY IF EXISTS "Treatment items insert for clinic" ON treatment_items;
 DROP POLICY IF EXISTS "Treatment items update for clinic" ON treatment_items;
 DROP POLICY IF EXISTS "Treatment items delete for clinic" ON treatment_items;
+DROP POLICY IF EXISTS "Treatment items select" ON treatment_items;
+DROP POLICY IF EXISTS "Treatment items insert" ON treatment_items;
+DROP POLICY IF EXISTS "Treatment items update" ON treatment_items;
+DROP POLICY IF EXISTS "Treatment items delete" ON treatment_items;
 
 CREATE POLICY "Treatment items select"
   ON treatment_items
   FOR SELECT USING (
-    clinic_id = COALESCE(current_setting('app.current_clinic_id', true)::uuid, clinic_id)
+    clinic_id = current_setting('app.current_clinic_id')::uuid
   );
 
 CREATE POLICY "Treatment items insert"
@@ -215,7 +255,30 @@ CREATE POLICY "TCM options read only"
   FOR SELECT USING (true);
 
 -- ============================================
--- 9. 索引
+-- 9. 用户角色表策略
+-- ============================================
+
+DROP POLICY IF EXISTS "User roles select for self" ON user_roles;
+DROP POLICY IF EXISTS "User roles admin manage" ON user_roles;
+
+-- 用户只能查看自己的角色
+CREATE POLICY "User roles select for self"
+  ON user_roles
+  FOR SELECT USING (
+    user_id = auth.uid()
+  );
+
+-- 管理员可以管理所有角色
+CREATE POLICY "User roles admin manage"
+  ON user_roles
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 10. 索引
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_patients_clinic_id ON patients(clinic_id);
@@ -230,7 +293,7 @@ CREATE INDEX IF NOT EXISTS idx_prescription_items_record_id ON prescription_item
 CREATE INDEX IF NOT EXISTS idx_treatment_items_record_id ON treatment_items(record_id);
 
 -- ============================================
--- 10. 视图（带 fallback）
+-- 11. 视图
 -- ============================================
 
 CREATE OR REPLACE VIEW patient_full AS
@@ -250,10 +313,7 @@ SELECT
   p.created_at,
   p.updated_at
 FROM patients p
-WHERE p.clinic_id = COALESCE(
-  current_setting('app.current_clinic_id', true)::uuid,
-  p.clinic_id
-);
+WHERE p.clinic_id = current_setting('app.current_clinic_id')::uuid;
 
 CREATE OR REPLACE VIEW record_full AS
 SELECT
@@ -272,13 +332,10 @@ SELECT
   (SELECT json_agg(row_to_json(pi)) FROM prescription_items pi WHERE pi.record_id = mr.id) AS prescriptions,
   (SELECT json_agg(row_to_json(ti)) FROM treatment_items ti WHERE ti.record_id = mr.id) AS treatments
 FROM medical_records mr
-WHERE mr.clinic_id = COALESCE(
-  current_setting('app.current_clinic_id', true)::uuid,
-  mr.clinic_id
-);
+WHERE mr.clinic_id = current_setting('app.current_clinic_id')::uuid;
 
 -- ============================================
--- 11. 辅助函数：设置诊所上下文
+-- 12. 辅助函数：设置诊所上下文（ SECURITY INVOKER）
 -- ============================================
 
 CREATE OR REPLACE FUNCTION set_clinic_context(clinic_id uuid)
@@ -286,17 +343,17 @@ RETURNS VOID AS $$
 BEGIN
   PERFORM set_config('app.current_clinic_id', clinic_id::text, false);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================
--- 12. 验证 RLS 状态
+-- 13. 验证 RLS 状态
 -- ============================================
 
 SELECT
   relname AS table_name,
   rowsecurity AS rls_enabled
 FROM pg_class
-WHERE relname IN ('clinics', 'clinic_members', 'patients', 'medical_records', 'prescription_items', 'treatment_items', 'tcm_options');
+WHERE relname IN ('clinics', 'clinic_members', 'patients', 'medical_records', 'prescription_items', 'treatment_items', 'tcm_options', 'user_roles');
 
 -- 查看所有安全策略
 SELECT
