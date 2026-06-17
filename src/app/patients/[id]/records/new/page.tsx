@@ -173,12 +173,11 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const [hasInquiry, setHasInquiry] = useState(false);
   const [applyInquiry, setApplyInquiry] = useState(false);
 
-  // 加载问诊表数据
-  const loadInquiryData = () => {
-    if (!patient) return null;
+  // 加载问诊表数据（按 patientId 查询，不依赖闭包中的 patient）
+  const loadInquiryDataById = (patientId: string) => {
     try {
       const inquiries = JSON.parse(sessionStorage.getItem('inquiries') || '{}');
-      return inquiries[patient.id] || null;
+      return inquiries[patientId] || null;
     } catch {
       return null;
     }
@@ -186,55 +185,75 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
 
   // 应用问诊表数据到表单
   const applyInquiryToForm = (inquiry: Record<string, unknown>) => {
-    // 主诉：从 chiefComplaint 或 presentIllness
-    if (inquiry.chiefComplaint) {
-      setChiefComplaint(inquiry.chiefComplaint as string);
-    }
-    // 舌象
-    if (inquiry.tongueColor?.length || inquiry.tongueCoating?.length || inquiry.tongueBody?.length) {
-      const tongueColorMap: Record<string, string> = {
-        '淡红': '#F87171', '淡白': '#FECACA', '红': '#EF4444', '绛': '#B91C1C', '紫暗/瘀点': '#7F1D1D',
-      };
-      const tongueCoatingMap: Record<string, string> = {
-        '薄白': '#F5F5F5', '薄黄': '#FEF3C7', '厚腻': '#92400E', '黄腻': '#78350F', '少苔': '#D1D5DB', '剥苔': '#E5E7EB',
-      };
-      setTongueData({
-        color: (inquiry.tongueColor as string[])?.[0] || '',
-        colorHex: tongueColorMap[(inquiry.tongueColor as string[])?.[0] || ''] || '#F87171',
-        coating: (inquiry.tongueCoating as string[])?.[0] || '',
-        coatingHex: tongueCoatingMap[(inquiry.tongueCoating as string[])?.[0] || ''] || '#F5F5F5',
-      });
-    }
-    // 脉象
-    if (inquiry.pulse?.length) {
-      const pulseText = (inquiry.pulse as string[]).join('、');
-      setPulseData({
-        cun: pulseText,
-        guan: pulseText,
-        chi: pulseText,
-        text: pulseText,
-      });
-    }
-    // 体质
-    if (patient?.constitution) {
-      setConstitution(patient.constitution);
-    }
-    // 症状综合到主诉
+    // 1. 先收集所有主诉信息
     const symptoms: string[] = [];
     if (inquiry.coldHeat?.length) symptoms.push(`寒热：${(inquiry.coldHeat as string[]).join('、')}`);
     if (inquiry.sweat?.length) symptoms.push(`出汗：${(inquiry.sweat as string[]).join('、')}`);
     if (inquiry.sleep?.length) symptoms.push(`睡眠：${(inquiry.sleep as string[]).join('、')}`);
     if (inquiry.appetite?.length) symptoms.push(`食欲：${(inquiry.appetite as string[]).join('、')}`);
-    if (symptoms.length > 0 && !chiefComplaint) {
-      setChiefComplaint(`${inquiry.chiefComplaint || '问诊记录'}\n${symptoms.join('\n')}`);
+    if (inquiry.taste?.length) symptoms.push(`口味：${(inquiry.taste as string[]).join('、')}`);
+    if (inquiry.chestAbdomen?.length) symptoms.push(`胸腹：${(inquiry.chestAbdomen as string[]).join('、')}`);
+    if (inquiry.emotions?.length) symptoms.push(`情志：${(inquiry.emotions as string[]).join('、')}`);
+
+    // 主诉 = 现病史 + 症状
+    const complaint = [
+      inquiry.presentIllness ? `现病史：${inquiry.presentIllness}` : '',
+      inquiry.chiefComplaint ? `主诉：${inquiry.chiefComplaint}` : '',
+      symptoms.length > 0 ? symptoms.join('\n') : '',
+    ].filter(Boolean).join('\n\n');
+    if (complaint) {
+      setChiefComplaint(complaint);
     }
-    // 二便
-    if (inquiry.stool || inquiry.urine?.length) {
-      const bowelInfo = `大便：${inquiry.stool || '-'}`;
-      const urineInfo = `小便：${(inquiry.urine as string[])?.join('、') || '-'}`;
-      if (!summary) {
-        setSummary(`${bowelInfo}\n${urineInfo}`);
-      }
+
+    // 2. 舌象 - 使用正确的 TongueData 结构
+    const tongueColor = inquiry.tongueColor as string[] || [];
+    const tongueCoating = inquiry.tongueCoating as string[] || [];
+    const tongueBody = inquiry.tongueBody as string[] || [];
+
+    if (tongueColor.length || tongueCoating.length || tongueBody.length) {
+      setTongueData(prev => ({
+        ...prev,
+        tongueColor: tongueColor.map(c => ({ selected: c, degree: null, customText: '' })),
+        coatColor: tongueCoating.map(c => ({ selected: c, degree: null, customText: '' })),
+        tongueShape: tongueBody.map(b => ({ selected: b, degree: null, customText: '' })),
+      }));
+    }
+
+    // 3. 脉象 - 使用正确的 FullPulseData 结构
+    const pulseData = inquiry.pulse as string[] || [];
+    if (pulseData.length) {
+      // 将问诊表的脉象（浮沉迟数等）应用到寸关尺三部
+      const pulseText = pulseData.join('、');
+      const mainPulse = pulseData[0]; // 取第一个作为主脉
+      const newPulseData: FullPulseData = {
+        leftHand: {
+          cun: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+          guan: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+          chi: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+        },
+        rightHand: {
+          cun: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+          guan: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+          chi: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+        },
+        overall: { pulses: [{ mainPulse, modifiers: [] }], customText: pulseText },
+        customNotes: pulseText,
+      };
+      setPulseData(newPulseData);
+    }
+
+    // 4. 体质 - 使用患者档案中的体质
+    if (patient?.constitution) {
+      setConstitution(patient.constitution);
+    }
+
+    // 5. 二便信息放到摘要
+    const stool = inquiry.stool as string;
+    const urine = inquiry.urine as string[] || [];
+    if (stool || urine.length) {
+      const bowelInfo = `大便：${stool || '-'}`;
+      const urineInfo = `小便：${urine.join('、') || '-'}`;
+      setSummary(`${bowelInfo}\n${urineInfo}`);
     }
   };
 
@@ -247,8 +266,8 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
         setPatient(data);
         setConstitution(data.constitution || '');
         setAllergies(data.allergies || []);
-        // 检查是否有问诊表数据
-        const inquiryData = loadInquiryData();
+        // 直接传入 patientId 检查问诊表，不依赖闭包中的 patient
+        const inquiryData = loadInquiryDataById(id);
         setHasInquiry(!!inquiryData);
       } else {
         router.replace('/patients');
@@ -270,7 +289,7 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
 
   // 如果有问诊表数据且用户选择应用，则自动填入
   if (hasInquiry && !applyInquiry) {
-    const inquiryData = loadInquiryData();
+    const inquiryData = loadInquiryDataById(patient.id);
     if (inquiryData) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
