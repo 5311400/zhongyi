@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.4
+-- 版本：v0.6.5
 
 -- ============================================
 -- 1. 启用 RLS
@@ -278,7 +278,32 @@ CREATE POLICY "User roles admin manage"
   );
 
 -- ============================================
--- 10. 索引
+-- 10. 审计日志表策略
+-- ============================================
+
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Audit logs select for self" ON audit_logs;
+DROP POLICY IF EXISTS "Audit logs admin select" ON audit_logs;
+
+-- 用户只能查看自己操作的审计日志
+CREATE POLICY "Audit logs select for self"
+  ON audit_logs
+  FOR SELECT USING (
+    user_id = auth.uid()
+  );
+
+-- 管理员可以查看所有审计日志
+CREATE POLICY "Audit logs admin select"
+  ON audit_logs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- ============================================
+-- 11. 索引
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_patients_clinic_id ON patients(clinic_id);
@@ -294,7 +319,7 @@ CREATE INDEX IF NOT EXISTS idx_treatment_items_record_id ON treatment_items(reco
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 
 -- ============================================
--- 11. 视图
+-- 12. 视图
 -- ============================================
 
 CREATE OR REPLACE VIEW patient_full AS
@@ -411,9 +436,53 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 处方药材表审计触发器
+CREATE OR REPLACE FUNCTION audit_prescription_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  VALUES (
+    'prescription_items',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+    auth.uid(),
+    NOW(),
+    jsonb_build_object(
+      'record_id', COALESCE(NEW.record_id, OLD.record_id),
+      'medicine_name', COALESCE(NEW.medicine_name, OLD.medicine_name),
+      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 治疗项目表审计触发器
+CREATE OR REPLACE FUNCTION audit_treatment_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  VALUES (
+    'treatment_items',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+    auth.uid(),
+    NOW(),
+    jsonb_build_object(
+      'record_id', COALESCE(NEW.record_id, OLD.record_id),
+      'treatment_type', COALESCE(NEW.treatment_type, OLD.treatment_type),
+      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- 创建触发器
 DROP TRIGGER IF EXISTS audit_patients ON patients;
 DROP TRIGGER IF EXISTS audit_medical_records ON medical_records;
+DROP TRIGGER IF EXISTS audit_prescription_items ON prescription_items;
+DROP TRIGGER IF EXISTS audit_treatment_items ON treatment_items;
 
 CREATE TRIGGER audit_patients
 AFTER INSERT OR UPDATE OR DELETE ON patients
@@ -422,6 +491,14 @@ FOR EACH ROW EXECUTE FUNCTION audit_patient_changes();
 CREATE TRIGGER audit_medical_records
 AFTER INSERT OR UPDATE OR DELETE ON medical_records
 FOR EACH ROW EXECUTE FUNCTION audit_record_changes();
+
+CREATE TRIGGER audit_prescription_items
+AFTER INSERT OR UPDATE OR DELETE ON prescription_items
+FOR EACH ROW EXECUTE FUNCTION audit_prescription_changes();
+
+CREATE TRIGGER audit_treatment_items
+AFTER INSERT OR UPDATE OR DELETE ON treatment_items
+FOR EACH ROW EXECUTE FUNCTION audit_treatment_changes();
 
 -- ============================================
 -- 14. 验证 RLS 状态

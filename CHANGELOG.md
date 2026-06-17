@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2026-06-17
+
+### 优化
+
+**RLS 策略优化：**
+- 添加 audit_logs 表 RLS 策略（用户查看自己日志、管理员查看所有）
+- 添加处方药材表和治疗项目表的审计触发器，实现完整审计覆盖
+
 ## [0.6.4] - 2026-06-17
 
 ### 优化
