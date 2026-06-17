@@ -43,7 +43,7 @@ const TREATMENTS = ['普通针刺', '温针灸', '电针', '艾灸', '拔罐', '
 // 穴位拼音映射
 const ACUPOINT_PINYIN: Record<string, string> = {
   '太冲': 'taichong', '足三里': 'zusanli', '三阴交': 'sanyinjiao',
-  '期门': 'qimen', '合谷': 'hegu', '内关': 'neiguan',
+  '合谷': 'hegu', '内关': 'neiguan',
   '太溪': 'taixi', '阴陵泉': 'yinlingquan', '阳陵泉': 'yanglingquan',
   '百会': 'baihui', '神门': 'shenmen', '中脘': 'zhongwan',
   '风池': 'fengchi', '肩井': 'jianjing', '曲池': 'quchi',
@@ -187,13 +187,13 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
   const applyInquiryToForm = (inquiry: Record<string, unknown>) => {
     // 1. 先收集所有主诉信息
     const symptoms: string[] = [];
-    if (inquiry.coldHeat?.length) symptoms.push(`寒热：${(inquiry.coldHeat as string[]).join('、')}`);
-    if (inquiry.sweat?.length) symptoms.push(`出汗：${(inquiry.sweat as string[]).join('、')}`);
-    if (inquiry.sleep?.length) symptoms.push(`睡眠：${(inquiry.sleep as string[]).join('、')}`);
-    if (inquiry.appetite?.length) symptoms.push(`食欲：${(inquiry.appetite as string[]).join('、')}`);
-    if (inquiry.taste?.length) symptoms.push(`口味：${(inquiry.taste as string[]).join('、')}`);
-    if (inquiry.chestAbdomen?.length) symptoms.push(`胸腹：${(inquiry.chestAbdomen as string[]).join('、')}`);
-    if (inquiry.emotions?.length) symptoms.push(`情志：${(inquiry.emotions as string[]).join('、')}`);
+    if ((inquiry.coldHeat as string[] | undefined)?.length) symptoms.push(`寒热：${(inquiry.coldHeat as string[]).join('、')}`);
+    if ((inquiry.sweat as string[] | undefined)?.length) symptoms.push(`出汗：${(inquiry.sweat as string[]).join('、')}`);
+    if ((inquiry.sleep as string[] | undefined)?.length) symptoms.push(`睡眠：${(inquiry.sleep as string[]).join('、')}`);
+    if ((inquiry.appetite as string[] | undefined)?.length) symptoms.push(`食欲：${(inquiry.appetite as string[]).join('、')}`);
+    if ((inquiry.taste as string[] | undefined)?.length) symptoms.push(`口味：${(inquiry.taste as string[]).join('、')}`);
+    if ((inquiry.chestAbdomen as string[] | undefined)?.length) symptoms.push(`胸腹：${(inquiry.chestAbdomen as string[]).join('、')}`);
+    if ((inquiry.emotions as string[] | undefined)?.length) symptoms.push(`情志：${(inquiry.emotions as string[]).join('、')}`);
 
     // 主诉 = 现病史 + 症状
     const complaint = [
@@ -861,10 +861,10 @@ export default function RecordEditPage({ params }: { params: Promise<{ id: strin
                           if (!showDropdown) return;
                           if (e.key === 'ArrowDown') {
                             e.preventDefault();
-                            setHerbSelectedIdx(prev => Math.min(prev + 1, filteredHerbs.length - 1));
+                            setHerbSelectedIdx((prev: number | null) => Math.min(prev ?? 0 + 1, filteredHerbs.length - 1));
                           } else if (e.key === 'ArrowUp') {
                             e.preventDefault();
-                            setHerbSelectedIdx(prev => Math.max(prev - 1, 0));
+                            setHerbSelectedIdx((prev: number | null) => Math.max(prev ?? 0 - 1, 0));
                           } else if (e.key === 'Enter') {
                             e.preventDefault();
                             const herb = filteredHerbs[herbSelectedIdx!];

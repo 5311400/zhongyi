@@ -896,13 +896,13 @@ export default function PatientDetailPage({
                           <span className="text-muted-foreground font-normal">· 共 {record.herbs.length} 味</span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
-                          {record.herbs.map((h) => (
+                          {record.herbs.map((h: Record<string, unknown>) => (
                             <div
-                              key={h.name}
+                              key={(h.name as string)}
                               className="text-xs bg-surface px-2 py-1 rounded border border-outline-variant/30 flex items-center justify-between"
                             >
-                              <span className="text-foreground">{h.name}</span>
-                              <span className="text-muted-foreground font-mono">{h.dose}g</span>
+                              <span className="text-foreground">{(h.name as string)}</span>
+                              <span className="text-muted-foreground font-mono">{(h.dose as string)}g</span>
                             </div>
                           ))}
                         </div>
