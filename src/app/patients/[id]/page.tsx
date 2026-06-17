@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   ClipboardList,
   CheckCircle,
+  Upload,
 } from 'lucide-react';
 
 interface Patient {
@@ -333,15 +334,16 @@ export default function PatientDetailPage({
     setToast({ type: 'success', message: '资料已更新' });
   };
 
-  // 导出病历为 JSON 文件
+  // 导出病历为 JSON 文件（合并硬编码记录和 sessionStorage 记录）
   const handleExportRecords = () => {
     if (!patient) return;
     try {
-      const storedRecords = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
-      const patientRecords = storedRecords.filter((r: { patientId: string }) => r.patientId === patient.id);
+      const hardcoded = RECORDS[patient.id] || [];
+      const storedRecords = JSON.parse(sessionStorage.getItem('medical_records') || '[]')
+        .filter((r: { patientId: string }) => r.patientId === patient.id);
       const exportData = {
         patient: patient,
-        records: patientRecords,
+        records: [...hardcoded, ...storedRecords],
         exportedAt: new Date().toISOString(),
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -372,10 +374,16 @@ export default function PatientDetailPage({
           setToast({ type: 'error', message: '文件格式不正确' });
           return;
         }
-        // 合并到现有病历
+        // 合并到现有病历（导入时对 recordType 和 id 做兜底处理）
         const stored = JSON.parse(sessionStorage.getItem('medical_records') || '[]');
         const existingIds = new Set(stored.map((r: { id: string }) => r.id));
-        const newRecords = data.records.filter((r: { id: string }) => !existingIds.has(r.id));
+        const newRecords = data.records
+          .filter((r: { id: string }) => !existingIds.has(r.id))
+          .map((r: any) => ({
+            ...r,
+            id: r.id || `record_${Date.now()}_${Math.random()}`,
+            recordType: r.recordType || 'new',
+          }));
         const merged = [...stored, ...newRecords];
         sessionStorage.setItem('medical_records', JSON.stringify(merged));
         setToast({ type: 'success', message: `成功导入 ${newRecords.length} 条病历` });
@@ -689,7 +697,8 @@ export default function PatientDetailPage({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* 核心操作 */}
               <button
                 type="button"
                 onClick={handleEdit}
@@ -712,6 +721,9 @@ export default function PatientDetailPage({
                 <ClipboardList className="w-4 h-4" />
                 问诊表
               </Link>
+              {/* 分隔线 */}
+              <div className="w-px h-6 bg-outline-variant/30 mx-1" />
+              {/* 导入导出 */}
               <button
                 onClick={handleImportRecords}
                 className="px-4 py-2 bg-surface-container border border-outline-variant/40 rounded-md text-sm font-medium text-foreground hover:bg-surface-container/70 flex items-center gap-2 transition-colors"
