@@ -193,6 +193,7 @@ export default function InquiryPage({
   // 保存问诊表到 sessionStorage
   const handleSave = () => {
     if (!patient) return;
+    setSaving(true);
     try {
       const inquiries = JSON.parse(sessionStorage.getItem('inquiries') || '{}');
       inquiries[patient.id] = {
@@ -204,6 +205,8 @@ export default function InquiryPage({
       toast.success('问诊表已保存');
     } catch (e) {
       toast.error('保存失败');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -307,15 +310,13 @@ export default function InquiryPage({
       </div>
       <div class="field">
         <label>问头身</label>
-        <div class="checkboxes">
-          ${i.headSymptoms.map(v => `<span>☐ ${v}</span>`).join('')}
-        </div>
-        <div style="margin-top:8px">身体：${i.bodySymptoms.join('、') || '___'} ${i.bodyArea ? `部位：${i.bodyArea}` : ''}</div>
+        <div>头部：${i.headSymptoms.join('、') || '___'} ${i.headOther ? `其他：${i.headOther}` : ''}</div>
+        <div>身体：${i.bodySymptoms.join('、') || '___'} ${i.bodyArea ? `部位：${i.bodyArea}` : ''}</div>
       </div>
       <div class="field">
         <label>问二便</label>
-        <div>大便：${i.stool || '___'} ${i.stoolOther ? i.stoolOther : ''}</div>
-        <div>小便：${i.urine.join('、') || '___'} ${i.urineOther ? i.urineOther : ''}</div>
+        <div>大便：${i.stool || '___'} ${i.stoolOther ? `其他：${i.stoolOther}` : ''}</div>
+        <div>小便：${i.urine.join('、') || '___'} ${i.urineOther ? `其他：${i.urineOther}` : ''}</div>
       </div>
       <div class="field">
         <label>问饮食口味</label>
@@ -325,7 +326,7 @@ export default function InquiryPage({
       </div>
       <div class="field">
         <label>问胸腹</label>
-        <div>症状：${i.chestAbdomen.join('、') || '___'}</div>
+        <div>症状：${i.chestAbdomen.join('、') || '___'} ${i.chestAbdomenOther ? `其他：${i.chestAbdomenOther}` : ''}</div>
         <div>按压：${i.pressure.join('、') || '___'} 肠鸣：${i.bowelSound || '___'}</div>
       </div>
       <div class="field">
@@ -403,10 +404,15 @@ export default function InquiryPage({
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5"
+              disabled={saving}
+              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 disabled:opacity-50"
             >
-              <Save className="w-3.5 h-3.5" />
-              保存
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              {saving ? '保存中...' : '保存'}
             </button>
             <button
               onClick={handleExport}
@@ -551,26 +557,54 @@ export default function InquiryPage({
           {/* 问头身 */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2">问头身</h3>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {['头痛', '头晕', '头重', '身体沉重', '关节痛', '肌肉酸', '四肢麻木'].map((v) => (
-                <label key={v} className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container rounded-full text-sm cursor-pointer hover:bg-primary/10">
-                  <input
-                    type="checkbox"
-                    checked={inquiry.headSymptoms.includes(v)}
-                    onChange={() => toggleArray('headSymptoms', v)}
-                    className="rounded"
-                  />
-                  {v}
-                </label>
-              ))}
+            {/* 头部症状 */}
+            <div className="mb-3">
+              <span className="text-xs text-muted-foreground mb-1 block">头部症状</span>
+              <div className="flex flex-wrap gap-2">
+                {['头痛', '头晕', '头重'].map((v) => (
+                  <label key={v} className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container rounded-full text-sm cursor-pointer hover:bg-primary/10">
+                    <input
+                      type="checkbox"
+                      checked={inquiry.headSymptoms.includes(v)}
+                      onChange={() => toggleArray('headSymptoms', v)}
+                      className="rounded"
+                    />
+                    {v}
+                  </label>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={inquiry.headOther}
+                onChange={(e) => updateField('headOther', e.target.value)}
+                placeholder="其他头部不适"
+                className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
+              />
             </div>
-            <input
-              type="text"
-              value={inquiry.bodyArea}
-              onChange={(e) => updateField('bodyArea', e.target.value)}
-              placeholder="具体部位：膝/腰/肩等"
-              className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
-            />
+            {/* 身体症状 */}
+            <div>
+              <span className="text-xs text-muted-foreground mb-1 block">身体症状</span>
+              <div className="flex flex-wrap gap-2">
+                {['身体沉重', '关节痛', '肌肉酸', '四肢麻木', '腰痛', '背痛'].map((v) => (
+                  <label key={v} className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container rounded-full text-sm cursor-pointer hover:bg-primary/10">
+                    <input
+                      type="checkbox"
+                      checked={inquiry.bodySymptoms.includes(v)}
+                      onChange={() => toggleArray('bodySymptoms', v)}
+                      className="rounded"
+                    />
+                    {v}
+                  </label>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={inquiry.bodyArea}
+                onChange={(e) => updateField('bodyArea', e.target.value)}
+                placeholder="具体部位：膝/腰/肩等"
+                className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
+              />
+            </div>
           </div>
 
           {/* 问二便 */}
@@ -591,6 +625,13 @@ export default function InquiryPage({
                   <option value="黏马桶">黏马桶</option>
                   <option value="干结">干结</option>
                 </select>
+                <input
+                  type="text"
+                  value={inquiry.stoolOther}
+                  onChange={(e) => updateField('stoolOther', e.target.value)}
+                  placeholder="其他描述（如：便血、黏液等）"
+                  className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
+                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">小便</label>
@@ -607,6 +648,13 @@ export default function InquiryPage({
                     </label>
                   ))}
                 </div>
+                <input
+                  type="text"
+                  value={inquiry.urineOther}
+                  onChange={(e) => updateField('urineOther', e.target.value)}
+                  placeholder="其他描述"
+                  className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
+                />
               </div>
             </div>
           </div>
@@ -666,6 +714,13 @@ export default function InquiryPage({
                 </label>
               ))}
             </div>
+            <input
+              type="text"
+              value={inquiry.chestAbdomenOther}
+              onChange={(e) => updateField('chestAbdomenOther', e.target.value)}
+              placeholder="其他胸腹不适"
+              className="w-full h-9 px-3 bg-surface-container border border-outline-variant/30 rounded-md text-sm mt-2"
+            />
           </div>
 
           {/* 问睡眠 */}
