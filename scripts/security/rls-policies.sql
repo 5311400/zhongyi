@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.7
+-- 版本：v0.6.8
 
 -- ============================================
 -- 1. 启用 RLS
@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   table_name TEXT NOT NULL,
   action TEXT NOT NULL,
   record_id UUID,
-  user_id UUID REFERENCES auth.users(id),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   clinic_id UUID,
   changed_at TIMESTAMPTZ DEFAULT NOW(),
   details JSONB

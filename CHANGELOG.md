@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.8] - 2026-06-17
+
+### 优化
+
+**审计日志外键优化：**
+- audit_logs.user_id 外键添加 ON DELETE SET NULL
+- 允许删除用户时审计日志保留记录（user_id 变为 NULL），避免外键约束阻碍用户清理
+
 ## [0.6.7] - 2026-06-17
 
 ### 安全修复（高危）
