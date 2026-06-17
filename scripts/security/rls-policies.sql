@@ -345,8 +345,83 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 辅助函数：获取当前诊所上下文（用于调试）
+CREATE OR REPLACE FUNCTION get_clinic_context()
+RETURNS UUID AS $$
+BEGIN
+  RETURN current_setting('app.current_clinic_id', true)::uuid;
+END;
+$$ LANGUAGE plpgsql;
+
 -- ============================================
--- 13. 验证 RLS 状态
+-- 13. 审计日志触发器（可选）
+-- ============================================
+
+-- 创建审计日志表（如果不存在）
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  table_name TEXT NOT NULL,
+  action TEXT NOT NULL,
+  record_id UUID,
+  user_id UUID REFERENCES auth.users(id),
+  changed_at TIMESTAMPTZ DEFAULT NOW(),
+  details JSONB
+);
+
+-- 患者表审计触发器
+CREATE OR REPLACE FUNCTION audit_patient_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  VALUES (
+    'patients',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+    auth.uid(),
+    NOW(),
+    jsonb_build_object(
+      'old', row_to_json(OLD),
+      'new', row_to_json(NEW)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 病历表审计触发器
+CREATE OR REPLACE FUNCTION audit_record_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  VALUES (
+    'medical_records',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+    auth.uid(),
+    NOW(),
+    jsonb_build_object(
+      'old', row_to_json(OLD),
+      'new', row_to_json(NEW)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 创建触发器
+DROP TRIGGER IF EXISTS audit_patients ON patients;
+DROP TRIGGER IF EXISTS audit_medical_records ON medical_records;
+
+CREATE TRIGGER audit_patients
+AFTER INSERT OR UPDATE OR DELETE ON patients
+FOR EACH ROW EXECUTE FUNCTION audit_patient_changes();
+
+CREATE TRIGGER audit_medical_records
+AFTER INSERT OR UPDATE OR DELETE ON medical_records
+FOR EACH ROW EXECUTE FUNCTION audit_record_changes();
+
+-- ============================================
+-- 14. 验证 RLS 状态
 -- ============================================
 
 SELECT

@@ -240,6 +240,21 @@ CREATE EXTENSION IF NOT EXISTS pgaudit;
 - 记录敏感表的所有操作（patients、medical_records）
 - 记录认证失败尝试
 
+**审计日志表结构：**
+```sql
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  table_name TEXT NOT NULL,
+  action TEXT NOT NULL,
+  record_id UUID,
+  user_id UUID REFERENCES auth.users(id),
+  changed_at TIMESTAMPTZ DEFAULT NOW(),
+  details JSONB
+);
+```
+
+> 注：数据库级审计触发器已在 `rls-policies.sql` 中定义（患者表和病历表）。
+
 ### 4.2 应用级别
 
 ```typescript
@@ -318,11 +333,19 @@ Supabase 提供的备份策略：
 
 ```bash
 # .env.example
-DATABASE_URL=postgres://...
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-ENCRYPTION_KEY=...  # AES-256-GCM 密钥（32 字节）
-ENCRYPTION_KEY_ROTATION=...  # 密钥轮换计划（如：90 天）
+
+# Supabase 配置（前后端共用）
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-from-supabase-dashboard
+
+# 数据库连接（仅服务端使用）
+DATABASE_URL=postgres://postgres:password@db.your-project-id.supabase.co:5432/postgres
+
+# 加密密钥（32 字节，用于敏感字段加密）
+ENCRYPTION_KEY=your-32-byte-encryption-key-here
+
+# 密钥轮换计划（天）
+ENCRYPTION_KEY_ROTATION=90
 ```
 
 ### 7.2 密钥轮换
@@ -418,18 +441,26 @@ CREATE TABLE user_roles (
 -- RLS 策略已在 rls-policies.sql 中定义
 ```
 
+**角色说明：**
+- **admin**：系统管理员，拥有所有权限
+- **auditor**：审计员，只读权限，用于查看审计日志
+- **user**：普通用户（医师/助理），可操作患者和病历
+- **owner**：诊所所有者，可管理诊所和成员
+
 **user_roles 表 RLS 策略：**
 - 用户只能查看自己的角色
 - 管理员可以管理所有角色
 
 ### B. 安全测试清单
 
-- [ ] 渗透测试（每年至少 2 次，建议委托专业安全公司，预留预算 5-10 万元/年）
-- [ ] 漏洞扫描（每月）
-- [ ] 代码安全审计（每次发布前）
-- [ ] 依赖项安全扫描（每周）
-- [ ] 社会工程学测试（每年）
-- [ ] 安全应急演练（每季度）
+| 测试项目 | 频率 | 预算参考 |
+|----------|------|----------|
+| 渗透测试 | 每年至少 2 次 | 5-10 万元/年 |
+| 漏洞扫描 | 每月 | 1-2 万元/年 |
+| 代码安全审计 | 每次发布前 | 视范围而定 |
+| 依赖项安全扫描 | 每周 | - |
+| 社会工程学测试 | 每年 | - |
+| 安全应急演练 | 每季度 | - |
 
 ### C. 数据最小化原则
 

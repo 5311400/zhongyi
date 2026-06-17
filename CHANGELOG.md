@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-06-17
+
+### 优化
+
+**RLS 策略优化：**
+- 添加 `get_clinic_context()` 辅助函数，用于调试检查当前上下文
+- 添加 `audit_logs` 表和审计触发器（患者表、病历表）
+- 触发器记录 INSERT/UPDATE/DELETE 操作的详细变更信息
+
+**安全指南优化：**
+- 细化环境变量示例（区分前后端配置）
+- 补充角色说明（admin/auditor/user/owner）
+- 安全测试清单改为表格格式，添加预算参考
+- 添加 `audit_logs` 表结构定义
+
 ## [0.6.2] - 2026-06-17
 
 ### 安全修复（高危）
