@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.5
+-- 版本：v0.6.6
 
 -- ============================================
 -- 1. 启用 RLS
@@ -390,25 +390,28 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   action TEXT NOT NULL,
   record_id UUID,
   user_id UUID REFERENCES auth.users(id),
+  clinic_id UUID,
   changed_at TIMESTAMPTZ DEFAULT NOW(),
   details JSONB
 );
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_clinic_id ON audit_logs(clinic_id);
 
 -- 患者表审计触发器
 CREATE OR REPLACE FUNCTION audit_patient_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
   VALUES (
     'patients',
     TG_OP,
     CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
     auth.uid(),
+    COALESCE(NEW.clinic_id, OLD.clinic_id),
     NOW(),
     jsonb_build_object(
       'name', COALESCE(NEW.name, OLD.name),
-      'phone', COALESCE(NEW.phone, OLD.phone),
-      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+      'phone', COALESCE(NEW.phone, OLD.phone)
     )
   );
   RETURN NEW;
@@ -419,17 +422,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION audit_record_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
   VALUES (
     'medical_records',
     TG_OP,
     CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
     auth.uid(),
+    COALESCE(NEW.clinic_id, OLD.clinic_id),
     NOW(),
     jsonb_build_object(
       'patient_id', COALESCE(NEW.patient_id, OLD.patient_id),
-      'record_type', COALESCE(NEW.record_type, OLD.record_type),
-      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+      'record_type', COALESCE(NEW.record_type, OLD.record_type)
     )
   );
   RETURN NEW;
@@ -440,17 +443,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION audit_prescription_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
   VALUES (
     'prescription_items',
     TG_OP,
     CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
     auth.uid(),
+    COALESCE(NEW.clinic_id, OLD.clinic_id),
     NOW(),
     jsonb_build_object(
       'record_id', COALESCE(NEW.record_id, OLD.record_id),
-      'medicine_name', COALESCE(NEW.medicine_name, OLD.medicine_name),
-      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+      'medicine_name', COALESCE(NEW.medicine_name, OLD.medicine_name)
     )
   );
   RETURN NEW;
@@ -461,17 +464,59 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION audit_treatment_changes()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO audit_logs (table_name, action, record_id, user_id, changed_at, details)
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
   VALUES (
     'treatment_items',
     TG_OP,
     CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
     auth.uid(),
+    COALESCE(NEW.clinic_id, OLD.clinic_id),
     NOW(),
     jsonb_build_object(
       'record_id', COALESCE(NEW.record_id, OLD.record_id),
-      'treatment_type', COALESCE(NEW.treatment_type, OLD.treatment_type),
-      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
+      'treatment_type', COALESCE(NEW.treatment_type, OLD.treatment_type)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 诊所成员表审计触发器
+CREATE OR REPLACE FUNCTION audit_clinic_member_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
+  VALUES (
+    'clinic_members',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END,
+    auth.uid(),
+    COALESCE(NEW.clinic_id, OLD.clinic_id),
+    NOW(),
+    jsonb_build_object(
+      'user_id', COALESCE(NEW.user_id, OLD.user_id),
+      'role', COALESCE(NEW.role, OLD.role)
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 用户角色表审计触发器
+CREATE OR REPLACE FUNCTION audit_user_role_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, action, record_id, user_id, clinic_id, changed_at, details)
+  VALUES (
+    'user_roles',
+    TG_OP,
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.user_id ELSE NEW.user_id END,
+    auth.uid(),
+    NULL,
+    NOW(),
+    jsonb_build_object(
+      'user_id', COALESCE(NEW.user_id, OLD.user_id),
+      'role', COALESCE(NEW.role, OLD.role)
     )
   );
   RETURN NEW;
@@ -483,6 +528,8 @@ DROP TRIGGER IF EXISTS audit_patients ON patients;
 DROP TRIGGER IF EXISTS audit_medical_records ON medical_records;
 DROP TRIGGER IF EXISTS audit_prescription_items ON prescription_items;
 DROP TRIGGER IF EXISTS audit_treatment_items ON treatment_items;
+DROP TRIGGER IF EXISTS audit_clinic_members ON clinic_members;
+DROP TRIGGER IF EXISTS audit_user_roles ON user_roles;
 
 CREATE TRIGGER audit_patients
 AFTER INSERT OR UPDATE OR DELETE ON patients
@@ -499,6 +546,14 @@ FOR EACH ROW EXECUTE FUNCTION audit_prescription_changes();
 CREATE TRIGGER audit_treatment_items
 AFTER INSERT OR UPDATE OR DELETE ON treatment_items
 FOR EACH ROW EXECUTE FUNCTION audit_treatment_changes();
+
+CREATE TRIGGER audit_clinic_members
+AFTER INSERT OR UPDATE OR DELETE ON clinic_members
+FOR EACH ROW EXECUTE FUNCTION audit_clinic_member_changes();
+
+CREATE TRIGGER audit_user_roles
+AFTER INSERT OR UPDATE OR DELETE ON user_roles
+FOR EACH ROW EXECUTE FUNCTION audit_user_role_changes();
 
 -- ============================================
 -- 14. 验证 RLS 状态

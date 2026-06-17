@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.6] - 2026-06-17
+
+### 优化
+
+**RLS 策略优化：**
+- audit_logs 表添加 clinic_id 字段和索引，支持按诊所查询审计日志
+- 所有审计触发器更新：clinic_id 独立字段存储，优化查询性能
+- 添加诊所成员表审计触发器（跟踪权限变更：user_id、role）
+- 添加用户角色表审计触发器（跟踪角色变更：user_id、role）
+
 ## [0.6.5] - 2026-06-17
 
 ### 优化
