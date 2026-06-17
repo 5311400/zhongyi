@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-06-17
+
+### 优化
+
+**RLS 策略优化：**
+- 审计触发器改为只记录关键字段（name、phone、clinic_id），减少性能开销
+- 添加 `idx_audit_logs_created_at` 索引，优化审计日志查询
+
 ## [0.6.3] - 2026-06-17
 
 ### 优化

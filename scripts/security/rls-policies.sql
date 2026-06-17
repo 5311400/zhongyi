@@ -1,7 +1,7 @@
 -- 本草医案 - 数据库安全策略（RLS）
 -- 适用：Supabase PostgreSQL
 -- 创建时间：2026-06-17
--- 版本：v0.6.2
+-- 版本：v0.6.4
 
 -- ============================================
 -- 1. 启用 RLS
@@ -291,6 +291,7 @@ CREATE INDEX IF NOT EXISTS idx_medical_records_clinic_id ON medical_records(clin
 CREATE INDEX IF NOT EXISTS idx_medical_records_date ON medical_records(date);
 CREATE INDEX IF NOT EXISTS idx_prescription_items_record_id ON prescription_items(record_id);
 CREATE INDEX IF NOT EXISTS idx_treatment_items_record_id ON treatment_items(record_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 
 -- ============================================
 -- 11. 视图
@@ -380,8 +381,9 @@ BEGIN
     auth.uid(),
     NOW(),
     jsonb_build_object(
-      'old', row_to_json(OLD),
-      'new', row_to_json(NEW)
+      'name', COALESCE(NEW.name, OLD.name),
+      'phone', COALESCE(NEW.phone, OLD.phone),
+      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
     )
   );
   RETURN NEW;
@@ -400,8 +402,9 @@ BEGIN
     auth.uid(),
     NOW(),
     jsonb_build_object(
-      'old', row_to_json(OLD),
-      'new', row_to_json(NEW)
+      'patient_id', COALESCE(NEW.patient_id, OLD.patient_id),
+      'record_type', COALESCE(NEW.record_type, OLD.record_type),
+      'clinic_id', COALESCE(NEW.clinic_id, OLD.clinic_id)
     )
   );
   RETURN NEW;
