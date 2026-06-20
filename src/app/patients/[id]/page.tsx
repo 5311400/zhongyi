@@ -60,92 +60,7 @@ interface MedicalRecord {
   createdAt?: string;
 }
 
-const PATIENTS: Record<string, Patient> = {
-  p001: {
-    id: 'p001',
-    name: '陈秀英',
-    gender: '女',
-    age: 58,
-    phone: '138-0011-2233',
-    occupation: '退休教师',
-    constitution: '气郁质',
-    allergies: ['青霉素', '磺胺类'],
-    chronicDiseases: ['高血压（服药中）', '轻度骨质疏松'],
-    visitCount: 12,
-    firstVisit: '2024-03-15',
-    note: '情志易郁，睡眠偏浅，喜温饮。',
-  },
-  p002: {
-    id: 'p002',
-    name: '刘建国',
-    gender: '男',
-    age: 45,
-    phone: '139-1234-5678',
-    occupation: '工程师',
-    constitution: '平和质',
-    allergies: [],
-    chronicDiseases: [],
-    visitCount: 3,
-    firstVisit: '2024-11-20',
-    note: '',
-  },
-  p003: {
-    id: 'p003',
-    name: '张小敏',
-    gender: '女',
-    age: 32,
-    phone: '136-8765-4321',
-    occupation: '护士',
-    constitution: '气虚质',
-    allergies: ['海鲜'],
-    chronicDiseases: [],
-    visitCount: 8,
-    firstVisit: '2024-06-10',
-    note: '易疲劳，月经量少。',
-  },
-  p004: {
-    id: 'p004',
-    name: '李子轩',
-    gender: '男',
-    age: 8,
-    phone: '137-2222-8888',
-    occupation: '学生',
-    constitution: '特禀质',
-    allergies: ['花粉'],
-    chronicDiseases: [],
-    visitCount: 5,
-    firstVisit: '2024-09-01',
-    note: '过敏性鼻炎。',
-  },
-  p005: {
-    id: 'p005',
-    name: '黄美华',
-    gender: '女',
-    age: 67,
-    phone: '135-0000-1111',
-    occupation: '退休工人',
-    constitution: '痰湿质',
-    allergies: [],
-    chronicDiseases: ['高血脂'],
-    visitCount: 22,
-    firstVisit: '2023-12-01',
-    note: '体型偏胖，痰多。',
-  },
-  p006: {
-    id: 'p006',
-    name: '赵晓东',
-    gender: '男',
-    age: 52,
-    phone: '188-9999-0000',
-    occupation: '经理',
-    constitution: '湿热质',
-    allergies: [],
-    chronicDiseases: ['脂肪肝'],
-    visitCount: 4,
-    firstVisit: '2024-10-15',
-    note: '经常应酬，口苦口臭。',
-  },
-};
+const PATIENTS: Record<string, Patient> = {};
 
 const RECORDS: Record<string, MedicalRecord[]> = {
   p001: [
@@ -250,7 +165,7 @@ export default function PatientDetailPage({
   useEffect(() => {
     let isMounted = true;
 
-    params.then((resolvedParams) => {
+    params.then(async (resolvedParams) => {
       if (!isMounted) return;
 
       const id = resolvedParams.id;
@@ -275,7 +190,39 @@ export default function PatientDetailPage({
         console.error('sessionStorage 读取失败:', e);
       }
 
-      const existingPatient = PATIENTS[id];
+      let existingPatient = PATIENTS[id];
+        if (!existingPatient) {
+          try {
+            const res = await fetch(`/api/patients/${id}`);
+            if (res.ok) {
+              const apiData = await res.json();
+              const p = apiData.patient;
+              if (p) {
+                const allergies = typeof p.allergies === 'string' ? JSON.parse(p.allergies || '[]') : p.allergies || [];
+                const chronic = typeof p.chronic_diseases === 'string' ? JSON.parse(p.chronic_diseases || '[]') : p.chronic_diseases || [];
+                existingPatient = {
+                  id: p.id, name: p.name, gender: p.gender || '', age: p.birth_date ? Math.floor((Date.now() - new Date(p.birth_date).getTime()) / 31557600000) : 0,
+                  phone: p.phone || '', occupation: '', constitution: p.constitution || '', allergies, chronicDiseases: chronic,
+                  visitCount: apiData.records?.length || 0, firstVisit: p.created_at?.slice(0, 10) || '', note: p.notes || '',
+                };
+                // Also load records
+                if (apiData.records) {
+                  try {
+                    const existingRecords = JSON.parse(sessionStorage.getItem('medicalRecords') || '{}');
+                    existingRecords[id] = apiData.records.map((r: any) => ({
+                      id: r.id, date: r.visit_date, type: r.visit_type, createdAt: r.created_at,
+                      complaint: r.chief_complaint || '', tongue: r.tongue || '', pulse: r.pulse || '',
+                      diagnosis: r.diagnosis || '', treatment: r.treatment_plan || '',
+                      prescription: typeof r.prescription_items === 'string' ? JSON.parse(r.prescription_items || '[]') : r.prescription_items || [],
+                      advice: r.doctor_advice || '',
+                    }));
+                    sessionStorage.setItem('medicalRecords', JSON.stringify(existingRecords));
+                  } catch (e) {}
+                }
+              }
+            }
+          } catch (e) { console.error('API fetch failed:', e); }
+        }
       if (existingPatient) {
         setPatient(existingPatient);
       } else {

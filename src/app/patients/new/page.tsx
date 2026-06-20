@@ -87,17 +87,29 @@ export default function NewPatientPage() {
         note: formData.note,
       };
       
-      // 存储到 sessionStorage
-      try {
-        const patients = JSON.parse(sessionStorage.getItem('newPatients') || '{}');
-        patients[tempId] = newPatient;
-        sessionStorage.setItem('newPatients', JSON.stringify(patients));
-      } catch (e) {
-        console.error('sessionStorage 不可用:', e);
+      // 调用API创建患者
+      const res = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newPatient.name,
+          gender: newPatient.gender,
+          birth_date: null,  // TODO: add birth date field
+          phone: newPatient.phone || null,
+          constitution: newPatient.constitution || null,
+          allergies: JSON.stringify(formData.allergies ? formData.allergies.split(/[,，、]/).filter(Boolean) : []),
+          chronic_diseases: JSON.stringify(formData.chronicDiseases ? formData.chronicDiseases.split(/[,，、]/).filter(Boolean) : []),
+          notes: formData.note || null,
+        }),
+      });
+      if (!res.ok) {
+        toast.error('创建失败，请重试');
+        setIsSubmitting(false);
+        return;
       }
-      
+      const created = await res.json();
       toast.success('患者档案创建成功');
-      router.push(`/patients/${tempId}`);
+      router.push(`/patients/${created.id}`);
     } catch (error) {
       console.error('保存失败:', error);
       toast.error('保存失败，请重试');

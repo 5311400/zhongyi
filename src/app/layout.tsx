@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className="antialiased bg-background text-foreground font-sans">
         {isDev && <Inspector />}
         {children}
-      </body>
+      <script dangerouslySetInnerHTML={{ __html: `if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js")}` }} /></body>
     </html>
   );
 }
