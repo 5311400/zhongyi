@@ -1,133 +1,110 @@
-import { NextRequest } from 'next/server';
-import { LLMClient, Message } from 'coze-coding-dev-sdk';
+import { NextRequest, NextResponse } from 'next/server';
 
-// 平台托管的 DeepSeek 模型（无需用户提供 API Key）
-const MODEL_ID = 'deepseek-v3-2-251201';
+export async function POST(request: NextRequest) {
+  try {
+    const { symptoms, patientInfo, history } = await request.json();
 
-// 强制末尾提示词 — 必须在 prompt 模板中显式声明，并配合后端代码段拼接双重保证
-const MANDATORY_DISCLAIMER =
-  '【提示】本内容由 AI 生成，仅作为文书整理参考，具体诊断和治疗请遵从执业医师的指导。';
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'DEEPSEEK_API_KEY 未配置' }, { status: 500 });
+    }
 
-const SYSTEM_PROMPT = `你是一位资深中医临床辅助助手。请根据医师提供的四诊信息（主诉、舌象、脉象、面色、神情、体质、辨证），给出：
-1. 辨证分析：病位、病性、可能的证型
-2. 参考药方：经典方剂 + 加减建议（仅供医师参考，不构成处方）
-3. 针灸/推拿穴位方：主穴 + 配穴
-4. 医嘱建议：饮食、起居、情志
+    const systemPrompt = `你是一位经验丰富的中医师，擅长辨证论治。请根据患者提供的信息进行中医辨证分析。
 
 要求：
-- 输出专业、简洁、可操作
-- 必须使用中医术语
-- 必须以规范的 Markdown 格式输出
-- 在回答末尾必须包含免责声明：${MANDATORY_DISCLAIMER}`;
+1. 分析可能的证型（至少2个可能性）
+2. 给出推荐的治疗方案
+3. 列出建议的方剂（包括药物组成和剂量）
+4. 给出生活调理建议
+5. 注意事项和禁忌
 
-function buildUserPrompt(payload: Record<string, unknown>): string {
-  const patient = (payload.patient as Record<string, unknown>) || {};
-  const syndrome = (payload.syndrome as Record<string, unknown>) || {};
-  return `【患者基本信息】
-姓名：${patient.name ?? '未知'} · ${patient.gender ?? '?'} · ${patient.age ?? '?'} 岁
+请用专业但通俗易懂的语言回答，让患者能够理解。`;
 
-【主诉】
-${payload.chiefComplaint || '（未提供）'}
+    const userMessage = `患者信息：
+${patientInfo || '未提供'}
 
-【四诊信息】
-舌象：${payload.tongue || '（未提供）'}
-脉象：${payload.pulse || '（未提供）'}
-面色与神情：${payload.face || '（未提供）'}
+主要症状：
+${symptoms}
 
-【体质与辨证】
-体质：${payload.constitution || '（未提供）'}
-病位：${Array.isArray(syndrome.location) ? syndrome.location.join('、') : syndrome.location || '（未提供）'}
-病性：${Array.isArray(syndrome.nature) ? syndrome.nature.join('、') : syndrome.nature || '（未提供）'}
-医师初步辨证：${syndrome.name || '（未提供）'}
+${history ? `既往病史：${history}` : ''}
 
-请基于以上信息，给出辨证分析与参考处方建议。`;
-}
+请进行中医辨证分析。`;
 
-export async function POST(req: NextRequest) {
-  try {
-    const payload = await req.json();
-
-    const client = new LLMClient();
-    const messages: Message[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildUserPrompt(payload) },
-    ];
-
-    // 关键：使用流式输出，前端打字机式渲染
-    const streamGen = client.stream(messages, {
-      model: MODEL_ID,
-      temperature: 0.4,
-      streaming: true,
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
     });
 
-    // 构造 SSE 响应
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('DeepSeek API error:', error);
+      return NextResponse.json({ error: 'AI 服务暂时不可用' }, { status: 502 });
+    }
+
+    // 流式 SSE 输出
     const encoder = new TextEncoder();
-    const readable = new ReadableStream({
+    const stream = new ReadableStream({
       async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) { controller.close(); return; }
+        const decoder = new TextDecoder();
+        let buffer = '';
+
         try {
-          for await (const chunk of streamGen) {
-            // AIMessageChunk 可能有 content 字段
-            const text =
-              typeof chunk === 'string'
-                ? chunk
-                : ((chunk as unknown as { content?: string | Array<{ type: string; text?: string }> })
-                    .content ?? '');
-            const textStr =
-              typeof text === 'string'
-                ? text
-                : Array.isArray(text)
-                  ? text
-                      .map((p) => (p.type === 'text' ? p.text : ''))
-                      .join('')
-                  : '';
-            if (textStr) {
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ text: textStr })}\n\n`),
-              );
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') {
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                  break;
+                }
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                  }
+                } catch {}
+              }
             }
           }
-          // 流末尾再次附加免责声明（双重保证）
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ text: '\n\n---\n' + MANDATORY_DISCLAIMER })}\n\n`,
-            ),
-          );
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          controller.close();
         } catch (err) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ error: (err as Error).message })}\n\n`,
-            ),
-          );
+          console.error('Stream error:', err);
+        } finally {
           controller.close();
         }
       },
     });
 
-    return new Response(readable, {
+    return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: (err as Error).message || 'AI 辨证失败' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
+  } catch (error) {
+    console.error('Diagnosis API error:', error);
+    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return new Response(
-    JSON.stringify({
-      ok: true,
-      model: MODEL_ID,
-      message: 'POST 四诊信息到此端点获取 AI 辨证参考',
-    }),
-    { headers: { 'Content-Type': 'application/json' } },
-  );
 }
